@@ -110,7 +110,7 @@ FoodBridge AI incorporates intelligence across four core modules:
 ### A. Food Safety Intelligence
 The food safety analysis service (`src/services/mockAnalyzer.ts` via `src/services/aiService.ts`) runs local, deterministic evaluation algorithms:
 - **Timestamp Validation**: Validates chronological consistency (flags preparation dates in the future or availability deadlines earlier than preparation).
-- **Food Age Calculation**: Compares preparation date against the current time. Food stored beyond category thresholds (e.g. prepared meals > 24 hours, bakery items > 168 hours) is classified as stale or spoiled.
+- **Food Age Calculation**: Compares preparation date against the current time. Food is classified across four age bands: fresh, caution, stale, and spoiled. For example, prepared meals exceed the caution threshold at 4 hours, the stale threshold at 8 hours, and are classified `Not Recommended` beyond 24 hours. Bakery items follow a 24/72/168-hour band structure.
 - **Suitability Classification**: Assigns one of four advisory classifications:
   - `Suitable`: Fresh food within normal redistribution limits.
   - `Suitable with Conditions`: Usable food requiring immediate handover or cold-chain verification.

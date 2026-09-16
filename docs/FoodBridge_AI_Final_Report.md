@@ -211,13 +211,15 @@ FoodBridge AI distinguishes clearly between its current deterministic intelligen
 
 ### Category-Specific Age Boundaries
 
-| Food Category | Recommended Window | Caution Band (`Suitable with Conditions`) | Review Threshold (`Requires Review`) | Spoilage Limit (`Not Recommended`) |
+| Food Category | Fresh Band (`Suitable`) | Caution Band (`Suitable with Conditions`) | Stale Band (`Requires Review`) | Spoilage Limit (`Not Recommended`) |
 | :--- | :---: | :---: | :---: | :---: |
-| **Prepared Meals** | $\le 4\text{ hours}$ | $4\text{ to }12\text{ hours}$ | Room temp storage / missing data | $> 24\text{ hours}$ |
-| **Bakery & Bread** | $\le 24\text{ hours}$ | $24\text{ to }72\text{ hours}$ | $72\text{ to }168\text{ hours}$ | $> 168\text{ hours (7 days)}$ |
-| **Fresh Produce** | $\le 24\text{ hours}$ | $24\text{ to }48\text{ hours}$ | Borderline shelf life | $> 120\text{ hours}$ |
-| **Dairy & Eggs** | $\le 24\text{ hours}$ | $24\text{ to }48\text{ hours}$ | Unrefrigerated storage | $> 72\text{ hours}$ |
-| **Canned & Packaged**| $\le 30\text{ days}$ | $30\text{ to }90\text{ days}$ | Approaching printed expiry | Past expiration date |
+| **Prepared Meals** | $\le 4\text{ hours}$ | $4\text{ to }8\text{ hours}$ | $8\text{ to }24\text{ hours}$ | $> 24\text{ hours}$ |
+| **Bakery \& Bread** | $\le 24\text{ hours}$ | $24\text{ to }72\text{ hours}$ | $72\text{ to }168\text{ hours}$ | $> 168\text{ hours (7 days)}$ |
+| **Fresh Produce** | $\le 48\text{ hours}$ | $48\text{ to }96\text{ hours}$ | $96\text{ to }168\text{ hours}$ | $> 168\text{ hours (7 days)}$ |
+| **Dairy \& Eggs** | $\le 24\text{ hours}$ | $24\text{ to }72\text{ hours}$ | $72\text{ to }168\text{ hours}$ | $> 168\text{ hours (7 days)}$ |
+| **Canned \& Packaged** | $\le 72\text{ hours}$ | $72\text{ to }168\text{ hours}$ | $168\text{ to }720\text{ hours (30 days)}$ | $> 720\text{ hours (30 days)}$ |
+
+*These thresholds are the conservative advisory demonstration rules implemented in `src/services/mockAnalyzer.ts`. They are not official food-safety standards. Frozen (30/60/90-day bands) and Other (24/48/96-hour bands) categories also exist. Room-temperature storage of Prepared Meals, Frozen, or Dairy items independently raises suitability to at minimum `Requires Review`.*
 
 ### Safety Hard Gate State Model
 

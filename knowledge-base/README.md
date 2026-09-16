@@ -10,7 +10,7 @@ This directory serves as the documentation and domain reference guide for food s
 ### 1. Food Category Baselines & Shelf-Life Boundaries
 - **Prepared & Cooked Meals**: High-risk category. Must be redistributed within 4–8 hours of cooking under refrigeration ($\le 5\text{ }^\circ\text{C}$). Food exceeding 24 hours from preparation is classified as `Not Recommended` and prohibited from redistribution.
 - **Bakery & Bread**: Medium-risk category. Optimal redistribution window is 24–72 hours. Dry bread remains usable up to 7 days (168 hours) if stored in a dry, cool location. Any mold or moisture spoilage mandates immediate disposal.
-- **Fresh Produce**: Variable-risk category. Uncut raw fruits and vegetables generally remain suitable for 24–48 hours. Items exhibiting rot, severe bruising, or sour odors must be discarded or composted.
+- **Fresh Produce**: Variable-risk category. Uncut raw fruits and vegetables are generally suitable for up to 48 hours. Items in the 48–96 hour window require coordinator review. Items exhibiting rot, severe bruising, or sour odors must be discarded or composted regardless of elapsed time.
 - **Dairy & Eggs**: High-risk perishable category. Requires continuous unbroken cold chain ($\le 5\text{ }^\circ\text{C}$). Unrefrigerated dairy left at room temperature for $> 2\text{ hours}$ must not be redistributed.
 - **Canned & Shelf-Stable Goods**: Low-risk category. Inspect packaging for dents, rust, bulging, or compromised seals. Expired cans or damaged packaging must be rejected.
 
