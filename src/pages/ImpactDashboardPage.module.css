@@ -1,0 +1,210 @@
+.section {
+  margin-bottom: var(--space-10);
+}
+
+/* ── Chart ───────────────────────────────────────────────────────────────── */
+
+.chartHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+  gap: var(--space-3);
+}
+
+.chartTitle {
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.chartWrap {
+  height: 160px;
+  overflow: hidden;
+}
+
+.bars {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-2);
+  height: 140px;
+}
+
+.barGroup {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  height: 100%;
+  justify-content: flex-end;
+}
+
+.barTrack {
+  width: 100%;
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+}
+
+.barFill {
+  width: 100%;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  transition: height 0.4s ease;
+  min-height: 4px;
+}
+
+.barLabel {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.chartNote {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  margin-top: var(--space-3);
+}
+
+/* ── Progress bar ────────────────────────────────────────────────────────── */
+
+.progressTrack {
+  width: 100%;
+  height: 8px;
+  background: var(--color-border);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width 0.4s ease;
+}
+
+.progressNote {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  margin-top: var(--space-2);
+}
+
+/* ── Match performance ───────────────────────────────────────────────────── */
+
+.subTitle {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: var(--space-3);
+}
+
+.matchRateNumber {
+  font-size: var(--font-size-4xl);
+  font-weight: 800;
+  color: var(--color-primary);
+  letter-spacing: -0.03em;
+  margin-bottom: var(--space-3);
+}
+
+.matchList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.matchRow {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.matchOrg {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+.matchScore {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.matchScoreNum {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  min-width: 28px;
+}
+
+/* ── Table ───────────────────────────────────────────────────────────────── */
+
+.tableHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-sm);
+}
+
+.table th {
+  padding: var(--space-3) var(--space-5);
+  text-align: left;
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+  background: var(--color-surface);
+  font-weight: 600;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.table td {
+  padding: var(--space-3) var(--space-5);
+  color: var(--color-text-secondary);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.table tr:last-child td {
+  border-bottom: none;
+}
+
+.table tr:hover td {
+  background: var(--color-surface);
+}
+
+.tdMain {
+  color: var(--color-text) !important;
+  font-weight: 500;
+}
+
+/* ── Page heading ────────────────────────────────────────────────────────── */
+
+.pageHeading {
+  margin-bottom: var(--space-8);
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+
+@media (max-width: 760px) {
+  .table th:nth-child(4),
+  .table td:nth-child(4),
+  .table th:nth-child(5),
+  .table td:nth-child(5) {
+    display: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .table th:nth-child(3),
+  .table td:nth-child(3) {
+    display: none;
+  }
+}

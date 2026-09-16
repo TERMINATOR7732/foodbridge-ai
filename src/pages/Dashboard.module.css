@@ -1,0 +1,234 @@
+/* ── Hero ────────────────────────────────────────────────────────────────── */
+
+.hero {
+  padding: var(--space-16) 0 var(--space-12);
+  background-color: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.heroInner {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--space-12);
+  align-items: center;
+}
+
+.heroContent {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  max-width: 560px;
+}
+
+.heroHeadline {
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  color: var(--color-text);
+}
+
+.heroText {
+  font-size: var(--font-size-lg);
+  color: var(--color-text-secondary);
+  line-height: 1.7;
+}
+
+.heroActions {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin-top: var(--space-2);
+}
+
+.heroIllustration {
+  flex-shrink: 0;
+}
+
+.illustration {
+  width: 260px;
+  height: 200px;
+}
+
+/* ── Impact ──────────────────────────────────────────────────────────────── */
+
+.impactSection {
+  padding: var(--space-12) 0;
+}
+
+.impactHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+/* ── How it works ────────────────────────────────────────────────────────── */
+
+.howSection {
+  padding: var(--space-12) 0;
+  background: var(--color-surface);
+  border-top: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.steps {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  max-width: 680px;
+}
+
+.step {
+  display: flex;
+  gap: var(--space-4);
+  align-items: flex-start;
+}
+
+.stepNumber {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: var(--color-primary);
+  color: white;
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.stepTitle {
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: var(--space-1);
+}
+
+.stepDesc {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+/* ── Activity ────────────────────────────────────────────────────────────── */
+
+.activitySection {
+  padding: var(--space-12) 0;
+}
+
+.activityHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.activityList {
+  padding: 0;
+  overflow: hidden;
+}
+
+.activityItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-6);
+}
+
+.activityItemBorder {
+  border-bottom: 1px solid var(--color-border);
+}
+
+.activityIcon {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.iconDonation { background: var(--color-primary-light); color: var(--color-primary); }
+.iconMatch { background: var(--color-accent-light); color: var(--color-accent); }
+.iconRequest { background: var(--color-warning-light); color: var(--color-warning); }
+.iconApproval { background: var(--color-success-light); color: var(--color-success); }
+
+.activityBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.activityDescription {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+.activityDetail {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.activityTime {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ── Principles ──────────────────────────────────────────────────────────── */
+
+.principlesSection {
+  padding: var(--space-12) 0 var(--space-16);
+}
+
+.principleCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.principleTitle {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.principleDesc {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+
+@media (max-width: 860px) {
+  .heroInner {
+    grid-template-columns: 1fr;
+  }
+  .heroIllustration {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .hero {
+    padding: var(--space-10) 0 var(--space-8);
+  }
+  .activityItem {
+    padding: var(--space-3) var(--space-4);
+  }
+}
