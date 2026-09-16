@@ -95,11 +95,11 @@ flowchart TD
     A[Eligible Food Analysis Result] --> B[Retrieve Open Community Requests]
     B --> C{For Each Candidate Request}
     
-    C --> F1[1. Category Compatibility Score: 0 to 35 pts]
-    C --> F2[2. Quantity Alignment Score: 5 to 25 pts]
-    C --> F3[3. Availability Status Score: 0 to 15 pts]
-    C --> F4[4. Location Proximity Score: 0 to 15 pts]
-    C --> F5[5. Urgency Level Score: 2 to 10 pts]
+    C --> F1[1. Category Compatibility Score: 0 or 25 pts]
+    C --> F2[2. Quantity Alignment Score: 0, 10, or 20 pts]
+    C --> F3[3. Availability Status Score: 0 or 20 pts]
+    C --> F4[4. Location Proximity Score: 0 or 20 pts]
+    C --> F5[5. Urgency Level Score: 0, 5, 10, or 15 pts]
 
     F1 --> Sum[Calculate Total Score: 0 - 100]
     F2 --> Sum

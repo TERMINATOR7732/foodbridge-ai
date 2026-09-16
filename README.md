@@ -2,10 +2,10 @@
 
 > **AI-Assisted Food Rescue & Community Redistribution Platform**
 
-FoodBridge AI is an intelligent sustainability platform designed to help community coordinators and food donors assess surplus food, determine redistribution suitability, and connect edible surplus with local organisations in need. Built on a safety-first architecture, FoodBridge AI keeps human decision-makers in complete control at every stage while automating shelf-life evaluation, priority scoring, multi-factor community matching, and lifecycle tracking.
+FoodBridge AI is an intelligent sustainability platform designed to assist community coordinators and food donors in evaluating surplus food, assessing redistribution suitability, and connecting wholesome surplus with local relief organisations in need. Built on a safety-first architecture, FoodBridge AI keeps human decision-makers in control at every stage while automating shelf-life evaluation, priority scoring, multi-factor community matching, and donation lifecycle tracking.
 
 > [!NOTE]
-> **Demonstration Platform**: FoodBridge AI is a fully functional web demonstration. Community recipient profiles, baseline figures, and matching recommendations are simulated using deterministic, local logic to showcase the end-to-end redistribution workflow without requiring external APIs or live food bank integrations.
+> **Demonstration Platform**: FoodBridge AI is a fully functional web demonstration. Community recipient profiles, baseline metrics, and matching recommendations are simulated using deterministic, explainable local logic to showcase the end-to-end redistribution workflow without requiring external APIs or live food bank integrations.
 
 ---
 
@@ -39,25 +39,34 @@ flowchart TD
 
 ## Problem Statement
 
-Every year, millions of tonnes of wholesome, edible surplus food are discarded by bakeries, commercial kitchens, grocery markets, and event organisers. At the same time, community organisations and relief shelters face ongoing food insecurity.
+Every year, millions of tonnes of wholesome, edible food are discarded by commercial kitchens, bakeries, grocery retailers, and catering events. Concurrently, community food pantries, emergency shelters, and relief organisations face ongoing food supply gaps.
 
 Key challenges in surplus food redistribution include:
-1. **Time-Critical Expiry**: Surplus food deteriorates rapidly; donors often lack the time to assess shelf life and find suitable recipients manually.
-2. **Food Safety Risks**: Incorrect temperature management, storage conditions, or elapsed consumption windows create health hazards.
+1. **Time-Critical Expiry**: Surplus food deteriorates rapidly; donors often lack the time to assess shelf-life and identify suitable recipients manually.
+2. **Food Safety Risks**: Incorrect temperature handling, improper storage, or elapsed consumption windows create health hazards for vulnerable recipients.
 3. **Logistics & Alignment**: Mismatches between donated quantities, food categories, and recipient storage capacities lead to wasted coordination efforts.
-4. **Lack of Transparency**: Coordinators need clear, plain-language reasoning for recommendations rather than opaque "black-box" decisions.
+4. **Lack of Transparency**: Coordinators need clear, plain-language reasoning for recommendations rather than opaque "black-box" algorithmic scores.
 
 ---
 
-## Solution
+## Why This Problem Matters
 
-FoodBridge AI provides an automated, human-supervised redistribution pipeline:
+Food waste is both a severe humanitarian failure and an environmental crisis:
+- **Humanitarian Impact**: While edible food is discarded daily, vulnerable community members experience acute food insecurity.
+- **Methane Emissions**: Organic food waste deposited in municipal landfills decomposes anaerobically, generating methane ($\text{CH}_4$)—a greenhouse gas with a global warming potential significantly greater than carbon dioxide over a 20-year horizon.
+- **Resource Depletion**: Wasted food squanders the embedded water, energy, agricultural land, and labor required to produce, process, and transport it.
+
+---
+
+## Proposed Solution
+
+FoodBridge AI provides an automated, human-supervised redistribution pipeline that eliminates coordination friction while upholding strict food-safety protocols:
 
 ```
 Donor enters surplus details
   ↳ Deterministic Food Safety Analysis
     ↳ Safety Hard Gate (Eligible vs. Blocked)
-      ↳ Multi-Factor Community Matching
+      ↳ Explainable Multi-Factor Community Matching
         ↳ Coordinator Review & Match Confirmation
           ↳ Linear Donation Lifecycle (Matched → Accepted → In Transit → Completed)
             ↳ Session-Persisted Dynamic Impact Metrics
@@ -67,13 +76,13 @@ Donor enters surplus details
 
 ## Key Features
 
-1. **Surplus Food Submission**: Streamlined donation intake capturing food name, category, quantity, unit, preparation timestamp, availability deadline, storage conditions, location area, and dietary/allergen notes.
-2. **Deterministic Food Safety Analysis**: Instant advisory evaluation calculating food age, remaining consumption windows, storage guidance, safety considerations, and advisory suitability tiers.
-3. **Safety Hard Gate**: Architectural prevention mechanism that blocks `Not Recommended` food from reaching community matching or match confirmation.
-4. **Community Matching Engine**: Multi-factor scoring engine evaluating recipient category compatibility, quantity alignment, availability status, geographic proximity, and urgency.
-5. **Transparent Match Factors**: Plain-language explanations and structured visual factor chips (`Category`, `Quantity`, `Available`, `Location`, `Safety`) showing why each match scored as it did.
+1. **Surplus Food Intake**: Structured submission capturing food name, category, quantity, unit, estimated servings, preparation timestamp, availability deadline, storage conditions, location area, and dietary/allergen notes.
+2. **Deterministic Food Safety Analysis**: Instant advisory evaluation calculating food age in hours, remaining shelf-life windows, storage guidance, safety considerations, and suitability tiers.
+3. **Safety Hard Gate**: Architectural safety mechanism that blocks `Not Recommended` food from reaching community matching or match confirmation.
+4. **Explainable Community Matching**: Multi-factor scoring engine evaluating candidate recipients on category compatibility, quantity alignment, availability status, geographic proximity, and request urgency.
+5. **Transparent Match Factors**: Plain-language explanations and structured visual factor chips (`Category`, `Quantity`, `Available`, `Location`, `Safety`) explaining why each match scored as it did.
 6. **Donation Lifecycle Tracking**: Sequential state stepper tracking confirmed donations through `Matched` &rarr; `Accepted` &rarr; `In Transit` &rarr; `Completed`.
-7. **Safe Cancellation Handling**: Protected cancellation workflow permitted only from non-terminal states (`Matched` or `Accepted`) with mandatory confirmation modals.
+7. **Protected Cancellation**: Safe cancellation workflow permitted only from non-terminal states (`Matched` or `Accepted`) with mandatory confirmation dialogs.
 8. **Dynamic Impact Metrics**: Reactive metrics engine that automatically accumulates completed donations into platform totals across both the home Dashboard and Impact Dashboard.
 9. **Recent Completed Donations**: Completed donations dynamically appear at the top of the Recent Donations table with active status badges.
 10. **Conversational AI Assistant**: Local, deterministic conversational assistant supporting natural-language questions about food safety, donation procedures, lifecycle stages, and sustainability.
@@ -82,30 +91,55 @@ Donor enters surplus details
 
 ---
 
-## AI & Intelligent Components
+## How AI & Intelligent Logic Is Used
 
-### 1. Food Safety Analysis
+FoodBridge AI incorporates intelligence across four core modules:
+
+### A. Food Safety Intelligence
 The food safety analysis service (`src/services/mockAnalyzer.ts` via `src/services/aiService.ts`) runs local, deterministic evaluation algorithms:
-- **Timestamp Relationship Validation**: Checks for chronological consistency (flags preparation dates in the future or availability deadlines earlier than preparation).
-- **Food Age Calculation**: Compares preparation date against the current time. Food stored beyond category thresholds (e.g. prepared meals > 24 hours, bakery items > 72 hours) is classified as stale or spoiled.
-- **Suitability Classification**: Produces one of four advisory classifications:
+- **Timestamp Validation**: Validates chronological consistency (flags preparation dates in the future or availability deadlines earlier than preparation).
+- **Food Age Calculation**: Compares preparation date against the current time. Food stored beyond category thresholds (e.g. prepared meals > 24 hours, bakery items > 168 hours) is classified as stale or spoiled.
+- **Suitability Classification**: Assigns one of four advisory classifications:
   - `Suitable`: Fresh food within normal redistribution limits.
   - `Suitable with Conditions`: Usable food requiring immediate handover or cold-chain verification.
   - `Requires Review`: Food with borderline parameters or missing fields requiring physical assessment.
   - `Not Recommended`: Expired, spoiled, or improperly stored food.
 
-### 2. Community Matching Engine
-The matching engine (`src/services/matchingService.ts`) evaluates candidate community requests across five weighted criteria alongside a safety prerequisite, producing an explainable 0–100 compatibility score.
+### B. Community Matching Intelligence
+The matching engine (`src/services/matchingService.ts`) evaluates candidate community requests across five weighted criteria alongside a safety prerequisite:
+- Category Compatibility (**25 pts**)
+- Quantity Alignment (**20 pts**)
+- Recipient Availability (**20 pts**)
+- Location Proximity (**20 pts**)
+- Request Urgency (**15 pts**)
+- Generates transparent, human-readable match explanations and structured factor chips.
 
-### 3. Local Conversational Assistant
-The assistant (`src/services/assistantService.ts`) provides intent-driven natural language support:
-- **Local & Deterministic**: Zero network requests, zero external LLM dependencies, zero API keys.
-- **Session-Aware Context**: Inspects current `sessionStorage` state to reference active food names, safety classifications, or current donation steps when answering user questions.
-- **Strict Guardrails**: Never fabricates safety certifications and gracefully handles unknown topics by providing suggested platform prompts.
+### C. Conversational Assistant
+The assistant (`src/services/assistantService.ts`) provides natural-language guidance:
+- **Pattern-Based Intent Detection**: Identifies 15 distinct user intents covering safety, procedures, storage, cancellation, and sustainability.
+- **Session-Aware Context**: Inspects active `sessionStorage` state to reference specific submitted food items, safety classifications, or current donation stages.
+- **Zero External APIs**: Operates locally with zero latency, zero token costs, and no external API keys.
+
+### D. Safety Governance
+- Enforces an automated **Safety Hard Gate** that prevents unviable food from entering the matching pipeline.
+- Requires explicit coordinator authorization before any food transfer occurs.
 
 ---
 
-## Safety Architecture
+## What Is Actually AI vs. Deterministic Logic
+
+To maintain academic and technical integrity, FoodBridge AI is explicit about its implementation:
+
+> [!IMPORTANT]
+> **FoodBridge AI uses deterministic, explainable AI-assisted decision logic in the current implementation. It does not depend on a live external LLM.**
+>
+> - **Current Implementation**: The application is powered by deterministic heuristics, mathematical scoring models, rule-based expert safety algorithms, and pattern-based natural language intent classification.
+> - **Zero External AI Services**: No cloud models (such as OpenAI, Google Gemini, Anthropic Claude, or IBM Watson), RAG vector databases, deep learning networks, or computer vision APIs are actively invoked.
+> - **Advantages of this Architecture**: Fully reproducible results, zero operational token costs, zero latency spikes, complete offline capability, zero risk of hallucinated safety certifications, and total privacy for sensitive community data.
+
+---
+
+## Food Safety Decision Architecture
 
 ```mermaid
 flowchart TD
@@ -128,17 +162,17 @@ flowchart TD
 
 ---
 
-## Multi-Factor Matching Criteria
+## Community Matching Algorithm
 
-The matching engine ranks recipient organizations based on five transparent, weighted factors:
+The matching engine ranks recipient organizations based on five transparent, weighted factors totaling 100 points:
 
 | Criterion | Max Weight | Evaluation Logic | Rationale |
 | :--- | :---: | :--- | :--- |
-| **Category Compatibility** | **35 pts** | Exact match with recipient's requested food categories (`35 pts`); partial overlap (`20 pts`); mismatched (`0 pts`). | Ensures organizations receive food suitable for their serving facilities and dietary policies. |
-| **Quantity Alignment** | **25 pts** | Available servings meet recipient stated need (`25 pts`); partial need &ge; 50% (`15 pts`); minimal need &lt; 50% (`5 pts`). | Minimizes logistical overhead by matching bulk surplus with high-capacity recipients. |
-| **Availability Match** | **15 pts** | Recipient is actively `Open` (`15 pts`); `Partially Matched` (`10 pts`); `Closed` (`0 pts` / excluded). | Prevents dispatching donations to organizations that cannot receive them. |
-| **Location Proximity** | **15 pts** | Same district/neighborhood (`15 pts`); adjacent district (`10 pts`); distant (`5 pts`). | Minimizes transit time to maintain food temperature integrity and reduce transport emissions. |
-| **Urgency Level** | **10 pts** | Recipient request flagged `Critical` (`10 pts`); `High` (`8 pts`); `Medium` (`5 pts`); `Low` (`2 pts`). | Directs time-sensitive surplus to shelters with immediate meal gaps. |
+| **Category Compatibility** | **25 pts** | Exact or compatible food category match (`25 pts`); incompatible (`0 pts`). | Ensures organizations receive food suitable for their serving facilities and dietary policies. |
+| **Quantity Alignment** | **20 pts** | Available servings fully meet recipient need (`20 pts`); partial need (`10 pts`); insufficient/incompatible unit (`0 pts`). | Minimizes logistical overhead by matching surplus quantities with appropriate recipient capacity. |
+| **Availability Match** | **20 pts** | Recipient is actively `Open` or `Partially Matched` (`20 pts`); `Closed` (`0 pts` / excluded). | Prevents dispatching donations to organizations that cannot receive them. |
+| **Location Proximity** | **20 pts** | Same district/suburb (`20 pts`); different district (`0 pts`). | Minimizes transit time to maintain food temperature integrity and reduce transport emissions. |
+| **Urgency Level** | **15 pts** | Recipient request flagged `Critical` (`15 pts`); `High` (`10 pts`); `Medium` (`5 pts`); `Low` (`0 pts`). | Directs time-sensitive surplus to shelters with immediate meal gaps. |
 | **Safety Hard Gate** | **Prerequisite** | Rejects unviable or `Not Recommended` food prior to score calculation. | Hard architectural block preventing unsafe food from reaching community recipients. |
 
 ---
@@ -193,41 +227,58 @@ flowchart TD
 
 ---
 
-## UN Sustainable Development Goals (SDG) Alignment
+## Sustainability Impact
 
-FoodBridge AI is designed to support sustainable food systems through verified, conservative impact pathways:
+FoodBridge AI addresses key challenges in community food systems:
 
-### Primary Focus: SDG 12 — Responsible Consumption and Production
-* **Target 12.3: Halving Global Food Waste by 2030**: FoodBridge AI enables commercial kitchens, bakeries, and markets to rescue edible surplus food before expiration. By automating food safety triage and logistics matching, the platform helps prevent edible surplus from entering municipal waste streams.
+| Sustainability Challenge | FoodBridge Mechanism | Intended Contribution |
+| :--- | :--- | :--- |
+| **Surplus food becoming waste** | Food safety triage + redistribution workflow | Helps identify potentially redistributable surplus before spoilage occurs. |
+| **Food insecurity** | Community matching engine | Helps connect suitable surplus with verified community requests. |
+| **Time-sensitive logistics** | Availability + urgency scoring | Helps prioritize time-sensitive requests from emergency shelters. |
+| **Transport inefficiency** | Location proximity factor | Helps reduce unnecessary transit distance in the simulated matching model. |
+| **Food safety risk** | Safety classification + hard gate | Prevents `Not Recommended` food from entering the matching pipeline. |
+| **Lack of transparency** | Explainable factor scores & chips | Helps coordinators understand and audit algorithmic recommendations. |
 
-### Secondary Focus: SDG 2 — Zero Hunger
-* **Target 2.1: Access to Safe, Nutritious Food**: Connecting surplus food with vetted community shelters, food pantries, and youth centers supports local nutritional resilience, helping bridge hunger gaps in vulnerable communities.
-
-### Supporting Focus: SDG 13 — Climate Action
-* **Target 13.3: Climate Change Mitigation & Methane Abatement**: Organic waste decomposing in anaerobic municipal landfills is one of the largest sources of anthropogenic methane ($\text{CH}_4$), a potent greenhouse gas. Redirecting surplus food to human consumption avoids landfill decomposition and its associated carbon footprint.
-
-### Supporting Focus: SDG 3 — Good Health and Well-Being
-* **Target 3.9: Foodborne Illness Prevention**: Through strict algorithmic food safety classification, cold-chain checks, and a hard safety gate, FoodBridge AI prevents spoiled or temperature-compromised food from reaching vulnerable populations.
+> [!NOTE]
+> The figures and pathways described represent **intended, system-level contributions** within the demonstration model, not verified real-world empirical emission measurements.
 
 ---
 
-## Responsible AI & Ethics
+## UN Sustainable Development Goals (SDG) Alignment
 
-* **Human-in-the-Loop**: All AI outputs (shelf life, match scores, priority rankings) are advisory. Redistribution requires explicit human confirmation.
-* **Algorithmic Transparency**: Every match displays its underlying factor breakdown (`Category`, `Quantity`, `Availability`, `Location`, `Safety`), eliminating "black box" decisions.
-* **Privacy by Design**: Collects zero personal phone numbers, emails, or personal identification. Donations require only food attributes and general district locations.
-* **Predictable & Verifiable**: Fully deterministic algorithms eliminate model hallucinations, latency spikes, and stochastic variations.
+| SDG Target | Platform Mechanism | Intended Contribution |
+| :--- | :--- | :--- |
+| **SDG 12: Responsible Consumption & Production**<br>*(Target 12.3: Halving per capita food waste)* | Surplus food intake, deterministic safety triage, and structured redistribution workflows. | Demonstrates an automated approach to identifying and redirecting commercial surplus before it becomes municipal waste. |
+| **SDG 2: Zero Hunger**<br>*(Target 2.1: Access to safe, nutritious food)* | Explainable community matching connecting donations to recipient capacity and need. | Helps community kitchens and emergency relief centers bridge meal supply gaps. |
+| **SDG 13: Climate Action**<br>*(Target 13.3: Methane emission abatement)* | Diversion pathway avoiding landfill disposal; location proximity factor minimizing transport distance. | Illustrates how diverting organic waste prevents anaerobic decomposition and avoids landfill methane ($\text{CH}_4$) emissions. |
+| **SDG 3: Good Health and Well-Being**<br>*(Target 3.9: Foodborne illness prevention)* | Algorithmic food safety classification, storage condition checks, and automated hard safety gates. | Protects vulnerable populations by blocking spoiled or temperature-abused items from community redistribution. |
+
+---
+
+## Responsible AI & Human Oversight
+
+> **"FoodBridge AI is a decision-support system, not an autonomous food-safety authority."**
+
+The platform is engineered around core ethical and responsible AI principles:
+- **Human-in-the-Loop**: All algorithmic outputs (shelf-life ratings, match scores, priority rankings) are strictly advisory. Handover requires explicit coordinator authorization.
+- **Explainability**: Every match displays its underlying factor score breakdown (`Category`, `Quantity`, `Availability`, `Location`, `Safety`), eliminating "black box" decisions.
+- **Deterministic & Reproducible**: Fully deterministic algorithms eliminate model hallucinations, stochastic variations, and unpredictable outputs.
+- **Conservative Uncertainty Handling**: Ambiguous inputs or conflicting timestamps automatically trigger a `Requires Review` status rather than optimistic assumptions.
+- **No Fabricated Certifications**: The platform explicitly disclaims clinical or legal food safety guarantees and prohibits "100% safe" language.
+- **Privacy by Design**: Collects zero personally identifiable information (PII), phone numbers, or private addresses.
+- **Transparent Limitations**: All baseline numbers are explicitly labeled as simulated demonstration data.
 
 ---
 
 ## Technology Stack
 
-* **Frontend Framework**: React 18.2 with TypeScript 5.2
-* **Build Tool & Bundler**: Vite 5.0
-* **Routing**: React Router DOM v6
-* **Styling**: CSS Modules with a custom CSS Custom Properties design system
-* **Persistence**: Browser `sessionStorage` with custom event dispatching
-* **Package Manager**: npm
+- **Frontend Framework**: React 18.2 with TypeScript 5.2
+- **Build Tool & Bundler**: Vite 5.0
+- **Routing**: React Router DOM v6.22
+- **Styling**: Scoped CSS Modules with a custom CSS Custom Properties design system
+- **Persistence**: HTML5 `sessionStorage` with custom DOM event dispatching (`impactMetricsChange`)
+- **Package Manager**: npm
 
 ---
 
@@ -240,9 +291,9 @@ foodbridge-ai/
 ├── src/
 │   ├── components/
 │   │   ├── common/              # MetricCard, PageHeader, StatusBadge
-│   │   └── layout/              # Header navigation, Layout shell, Footer
+│   │   └── layout/              # Header navigation, Layout shell
 │   ├── data/
-│   │   └── demoData.ts          # Baseline simulated community requests & demo entries
+│   │   └── demoData.ts          # Baseline simulated community requests & demo metrics
 │   ├── pages/
 │   │   ├── Dashboard.tsx        # Overview, hero, platform metrics, principles
 │   │   ├── DonateFoodPage.tsx   # Surplus food intake form with client validation
@@ -264,13 +315,17 @@ foodbridge-ai/
 │   │   └── index.ts             # Strict TypeScript definitions across domain models
 │   ├── App.tsx                  # Client route definitions
 │   └── main.tsx                 # React DOM entry point
+├── scratch/
+│   ├── test_suite.ts            # Food safety & community matching test suite (12/12)
+│   ├── test_metrics.ts          # Dynamic impact metrics lifecycle test suite (10/10)
+│   └── test_assistant.ts        # Conversational assistant test suite (30/30)
 ├── knowledge-base/
-│   └── README.md                # Domain standards documentation
+│   └── README.md                # Domain standards reference documentation
 ├── docs/
 │   ├── FoodBridge_AI_Final_Report.md # Comprehensive engineering & academic report
 │   ├── PROJECT_SUMMARY.md       # Concise presentation overview
 │   ├── TEST_REPORT.md           # Formal testing & verification results
-│   └── DIAGRAMS.md              # Standalone Mermaid system diagrams
+│   └── DIAGRAMS.md              # 10 standalone Mermaid system diagrams
 ├── package.json                 # Project dependencies and npm scripts
 ├── tsconfig.json                # TypeScript compiler configuration
 └── vite.config.ts               # Vite configuration
@@ -287,7 +342,7 @@ foodbridge-ai/
 ### Installation
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/foodbridge-ai.git
+git clone https://github.com/TERMINATOR7732/foodbridge-ai.git
 
 # Navigate into project directory
 cd foodbridge-ai
@@ -299,30 +354,27 @@ npm install
 npm run dev
 ```
 
-The Vite dev server will start and provide a local URL (typically `http://localhost:5173`).
+The local development server will start at `http://localhost:5173`.
 
 ### Production Build
 ```bash
 npm run build
 ```
-Compiles TypeScript and bundles production-optimised assets into the `dist/` directory.
+Compiles TypeScript and bundles production-optimized assets into `dist/`.
 
 ---
 
 ## Testing & Verification
 
-The platform has been audited using automated unit tests, lifecycle scripts, and headless browser tests via Chrome DevTools Protocol (CDP):
+The platform features automated test suites that can be executed directly from the repository root:
 
-| Audit Category | Test Script / Command | Verified Status |
+| Audit Category | Test Command | Verified Result |
 | :--- | :--- | :--- |
-| **Production Build** | `npm run build` | **PASS** (0 TypeScript errors, 1.30s build) |
-| **Food Safety Hard Gate** | `test_suite.ts` | **PASS** (10-day bread & spoiled food blocked) |
-| **Matching Engine** | `test_suite.ts` | **PASS** (Ranked by factors; closed requests excluded) |
-| **Lifecycle Stepper** | `test_suite.ts` | **PASS** (Valid transitions enforced; terminal guards active) |
-| **Dynamic Metrics** | `test_metrics.ts` | **PASS** (10/10 lifecycle cases passed; idempotent) |
-| **AI Assistant** | `test_assistant.ts` | **PASS** (30/30 natural language intents verified) |
-| **Browser E2E Lifecycle** | `test_browser_metrics_cdp.ts` | **PASS** (Full multi-donation browser flow verified) |
-| **Browser Console** | Headless Chrome/Edge audit | **0 console errors** |
+| **Production Build** | `npm run build` | **PASS** (0 TypeScript errors, clean bundle) |
+| **Food Safety & Matching** | `npx tsx scratch/test_suite.ts` | **PASS** (12/12 cases: safety thresholds, hard gate, recipient filtering) |
+| **Dynamic Impact Metrics** | `npx tsx scratch/test_metrics.ts` | **PASS** (10/10 cases: lifecycle accumulation, deduplication, kg parsing) |
+| **AI Assistant Intents** | `npx tsx scratch/test_assistant.ts` | **PASS** (30/30 cases: intent detection, context awareness, zero forbidden phrases) |
+| **Browser E2E Lifecycle** | Headless Chrome/Edge audit | **PASS** (Complete multi-step UI flow with 0 console errors) |
 
 ---
 
@@ -330,7 +382,7 @@ The platform has been audited using automated unit tests, lifecycle scripts, and
 
 1. **Platform Overview**: Open the Dashboard (`/`) to review design principles and baseline platform metrics (`1,240` meals, `312 kg`, `47` donation events).
 2. **Submit Surplus Food**: Click **Donate Surplus Food** (`/donate`). Enter food details (e.g. `Vegetable Curry & Rice`, `Prepared Meals`, `25 portions`, cooked today).
-3. **Food Safety Analysis**: Click **Analyse Surplus Food**. The advisory engine assesses remaining shelf life, storage requirements, and assigns suitability (`Suitable with Conditions`).
+3. **Food Safety Analysis**: Click **Analyse Surplus Food**. The advisory engine assesses remaining shelf-life, storage requirements, and assigns suitability (`Suitable with Conditions`).
 4. **Community Matching**: Click **Find Community Matches** (`/matching`). Review ranked community organisations with match scores and transparent factor breakdowns.
 5. **Confirm Match**: Select a matching organisation (e.g. `Community Center A`) and click **Confirm Match**.
 6. **Track Lifecycle**: On **Donation Status** (`/donation-status`), advance the donation sequentially: `Matched` &rarr; `Accepted` &rarr; `In Transit` &rarr; `Completed`.
@@ -350,15 +402,7 @@ The platform has been audited using automated unit tests, lifecycle scripts, and
 
 ## Screenshots
 
-> *Screenshots may be placed in a `docs/screenshots/` folder for presentations or portfolio display.*
-
-1. **Dashboard & Overview** — `docs/screenshots/01_dashboard.png`
-2. **Donation Intake Form** — `docs/screenshots/02_donation_form.png`
-3. **Advisory Food Safety Assessment** — `docs/screenshots/03_food_analysis.png`
-4. **Transparent Community Matching** — `docs/screenshots/04_community_matching.png`
-5. **Donation Lifecycle Stepper** — `docs/screenshots/05_donation_status.png`
-6. **Dynamic Impact Dashboard** — `docs/screenshots/06_impact_dashboard.png`
-7. **Conversational AI Assistant** — `docs/screenshots/07_ai_assistant.png`
+Screenshots can be added under `docs/screenshots/` for future portfolio and presentation use.
 
 ---
 
