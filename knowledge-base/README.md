@@ -5,19 +5,31 @@ This directory serves as the documentation and domain reference guide for food s
 > [!IMPORTANT]
 > **Advisory & Educational Reference**: This knowledge base contains reference domain documentation and educational guidelines. It is **not** a replacement for official public health food-safety authorities, statutory regulations, or professional physical food inspections. All parameters described herein operate as **demonstration rules** and **reference thresholds** within the software model and **require local regulatory verification** in any production deployment.
 
-## Reference Categories
+## Domain Reference Guidelines
 
-```
-knowledge-base/
-├── food-safety/
-│   ├── general-guidelines.md       # Category risk tiers, shelf-life boundaries, age thresholds
-│   ├── storage-temperatures.md     # Cold-chain protocols (refrigerated <= 5 °C, frozen <= -18 °C)
-│   └── allergen-guidance.md        # Major allergen declarations (nuts, gluten, dairy)
-├── redistribution/
-│   ├── best-practices.md           # Handover protocols, recipient verification, timing
-│   └── cold-chain.md               # Transit handling, insulated containers, vehicle checks
-└── README.md
-```
+### 1. Food Category Baselines & Shelf-Life Boundaries
+- **Prepared & Cooked Meals**: High-risk category. Must be redistributed within 4–8 hours of cooking under refrigeration ($\le 5\text{ }^\circ\text{C}$). Food exceeding 24 hours from preparation is classified as `Not Recommended` and prohibited from redistribution.
+- **Bakery & Bread**: Medium-risk category. Optimal redistribution window is 24–72 hours. Dry bread remains usable up to 7 days (168 hours) if stored in a dry, cool location. Any mold or moisture spoilage mandates immediate disposal.
+- **Fresh Produce**: Variable-risk category. Uncut raw fruits and vegetables generally remain suitable for 24–48 hours. Items exhibiting rot, severe bruising, or sour odors must be discarded or composted.
+- **Dairy & Eggs**: High-risk perishable category. Requires continuous unbroken cold chain ($\le 5\text{ }^\circ\text{C}$). Unrefrigerated dairy left at room temperature for $> 2\text{ hours}$ must not be redistributed.
+- **Canned & Shelf-Stable Goods**: Low-risk category. Inspect packaging for dents, rust, bulging, or compromised seals. Expired cans or damaged packaging must be rejected.
+
+### 2. Cold-Chain & Storage Protocols
+- **Refrigerated Holding**: $\le 5\text{ }^\circ\text{C}$ ($41\text{ }^\circ\text{F}$) continuously.
+- **Frozen Storage**: $\le -18\text{ }^\circ\text{C}$ ($0\text{ }^\circ\text{F}$) continuously.
+- **Temperature Danger Zone**: $5\text{ }^\circ\text{C}$ to $60\text{ }^\circ\text{C}$ ($41\text{ }^\circ\text{F}$ to $140\text{ }^\circ\text{F}$). Perishable foods held within this temperature range for $> 2\text{ hours}$ present significant microbiological risk and must not be accepted for redistribution.
+- **Transit Handling**: Perishable donations must be transported in clean, insulated containers with food-grade ice packs. Transit time should be minimized and documented.
+
+### 3. Allergen & Cross-Contamination Management
+- **Major Allergen Declarations**: Donors must declare the presence of major allergens (nuts, peanuts, gluten/wheat, dairy, eggs, soy, shellfish, fish, sesame).
+- **Physical Segregation**: Allergen-containing items must be packed and sealed separately to prevent airborne or contact cross-contact.
+- **Clear Labelling**: All food containers must feature legible ingredient and preparation timestamp labels.
+
+### 4. Safe Redistribution & Handover Best Practices
+- **Visual & Sensory Inspection**: Mandatory physical check of packaging integrity, smell, color, and temperature prior to accepting or handing over food.
+- **Recipient Verification**: Verify that receiving community partners have adequate on-site refrigeration and distribution capacity before dispatch.
+- **Immediate Logging**: Log donation dispatch and delivery timestamps directly in the system to maintain chain-of-custody auditability.
+
 
 ## Architectural Connection
 

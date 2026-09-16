@@ -9,6 +9,18 @@ FoodBridge AI is an intelligent sustainability platform designed to assist commu
 
 ---
 
+## Documentation Index
+
+| Document | Purpose & Scope |
+| :--- | :--- |
+| **[Comprehensive Project Report](docs/FoodBridge_AI_Final_Report.md)** | Full academic and engineering report covering problem definition, architecture, algorithms, and SDG alignment |
+| **[Executive Presentation Summary](docs/PROJECT_SUMMARY.md)** | High-level presentation summary of core capabilities, architecture, and sustainability impact |
+| **[System Architecture & Diagrams](docs/DIAGRAMS.md)** | 10 standalone Mermaid diagrams covering system flow, safety gate, matching, lifecycle, and metrics |
+| **[Formal Test Report](docs/TEST_REPORT.md)** | Complete verification matrix, test suites, CDP browser verification, and results |
+| **[Domain Knowledge Base](knowledge-base/README.md)** | Food safety guidelines, cold-chain standards, and redistribution reference thresholds |
+
+---
+
 ## Architecture
 
 ```mermaid

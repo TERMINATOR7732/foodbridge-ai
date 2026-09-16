@@ -87,3 +87,13 @@ The platform has been audited and verified across four reproducible test tiers:
 - **Demonstration Scope**: Community recipients, requests, and baseline metrics are simulated for demonstration purposes.
 - **Client Session Scope**: Data persists in browser `sessionStorage` and resets on tab closure.
 - **Decision Support Only**: Physical sensory inspection by human coordinators remains mandatory before distribution.
+
+---
+
+## 10. Key Documentation Links
+- **Comprehensive Project Report**: [FoodBridge_AI_Final_Report.md](FoodBridge_AI_Final_Report.md)
+- **System Architecture & Flow Diagrams**: [DIAGRAMS.md](DIAGRAMS.md)
+- **Formal Test & Verification Report**: [TEST_REPORT.md](TEST_REPORT.md)
+- **Repository Setup & Overview**: [README.md](../README.md)
+- **Domain Knowledge Base**: [README.md](../knowledge-base/README.md)
+

@@ -311,3 +311,13 @@ flowchart TD
 
 *Explanation: The three-pronged environmental and humanitarian impact pathway illustrating how surplus diversion concurrently supports food security (SDG 2), waste reduction (SDG 12), and methane emission avoidance (SDG 13).*
 
+---
+
+## Related Documentation
+- **Platform Overview & Quickstart**: [README.md](../README.md)
+- **Comprehensive Academic Report**: [FoodBridge_AI_Final_Report.md](FoodBridge_AI_Final_Report.md)
+- **Executive Presentation Summary**: [PROJECT_SUMMARY.md](PROJECT_SUMMARY.md)
+- **Formal Test & Verification Report**: [TEST_REPORT.md](TEST_REPORT.md)
+- **Domain Knowledge Base**: [README.md](../knowledge-base/README.md)
+
+

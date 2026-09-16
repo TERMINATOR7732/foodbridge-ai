@@ -31,6 +31,8 @@
 19. [Limitations & Demonstration Scope](#19-limitations--demonstration-scope)
 20. [Future Scope & Production Roadmap](#20-future-scope--production-roadmap)
 21. [Conclusion](#21-conclusion)
+22. [Related Documentation](#22-related-documentation)
+
 
 ---
 
@@ -397,3 +399,14 @@ The platform is designed around ethical and responsible AI guidelines:
 ## 21. Conclusion
 
 FoodBridge AI demonstrates a rigorous, production-ready engineering blueprint for technology-assisted surplus food redistribution. By combining deterministic food safety checks, transparent multi-factor matching, sequential lifecycle governance, and local conversational guidance, the platform proves that practical sustainability does not require opaque cloud models or risky automation—meaningful impact begins with safe, transparent, human-centered decision support.
+
+---
+
+## 22. Related Documentation
+
+- **Platform Overview & Quickstart**: [README.md](../README.md)
+- **System Architecture & Flow Diagrams**: [DIAGRAMS.md](DIAGRAMS.md)
+- **Executive Presentation Summary**: [PROJECT_SUMMARY.md](PROJECT_SUMMARY.md)
+- **Formal Test & Verification Report**: [TEST_REPORT.md](TEST_REPORT.md)
+- **Domain Knowledge Base**: [README.md](../knowledge-base/README.md)
+
