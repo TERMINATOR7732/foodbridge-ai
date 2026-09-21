@@ -145,7 +145,7 @@ async function runTests() {
   // 1G. Rice test case: 2.5 days old, refrigerated, elapsed window -> Requires Review
   const twoAndHalfDaysAgoHours = 60.5
   const prepTimeRice = new Date(now.getTime() - twoAndHalfDaysAgoHours * 3600 * 1000).toISOString()
-  const elapsedWindowUntil = new Date(now.getTime() - 48 * 3600 * 1000).toISOString() // window elapsed 48h ago
+  const elapsedWindowUntil = new Date(now.getTime() - 12 * 3600 * 1000).toISOString() // window elapsed 12h ago (live expired)
   const riceRes = await runAnalysis({
     foodName: 'Rice',
     category: 'Prepared Meals',

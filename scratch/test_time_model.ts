@@ -204,11 +204,18 @@ async function runTimeModelTests() {
   console.log('Test C Recommendation:', resC.recommendation)
   console.log('Test C Shelf Life:', resC.estimatedShelfLife)
 
-  if (Math.abs(resC.foodAgeHours! - 62.43) > 0.1) {
-    console.error(`❌ FAIL Test C: Expected foodAgeHours ~ 62.43, got ${resC.foodAgeHours}`)
+  if (resC.assessmentMode !== 'historical_demo') {
+    console.error(`❌ FAIL Test C: Expected assessmentMode "historical_demo", got "${resC.assessmentMode}"`)
     allPassed = false
   } else {
-    console.log('✅ PASS Test C: foodAgeHours is ~62.43 (~2 days and 14 hours)')
+    console.log('✅ PASS Test C: assessmentMode = historical_demo')
+  }
+
+  if (Math.abs(resC.foodAgeHours! - 6.5) > 0.1) {
+    console.error(`❌ FAIL Test C: Expected foodAgeHours ~ 6.5, got ${resC.foodAgeHours}`)
+    allPassed = false
+  } else {
+    console.log('✅ PASS Test C: foodAgeHours is ~6.5 (deterministic midpoint)')
   }
 
   if (resC.availabilityWindowHours !== 13) {
@@ -218,32 +225,33 @@ async function runTimeModelTests() {
     console.log('✅ PASS Test C: availabilityWindowHours = 13')
   }
 
-  if (resC.availabilityStatus !== 'Expired') {
-    console.error(`❌ FAIL Test C: Expected availabilityStatus = "Expired", got "${resC.availabilityStatus}"`)
+  if (resC.availabilityStatus !== 'Active') {
+    console.error(`❌ FAIL Test C: Expected availabilityStatus = "Active", got "${resC.availabilityStatus}"`)
     allPassed = false
   } else {
-    console.log('✅ PASS Test C: availabilityStatus = Expired')
+    console.log('✅ PASS Test C: availabilityStatus = Active')
   }
 
-  if (Math.abs(resC.elapsedSinceExpiryHours! - 49.43) > 0.1) {
-    console.error(`❌ FAIL Test C: Expected elapsedSinceExpiryHours ~ 49.43, got ${resC.elapsedSinceExpiryHours}`)
+  if (resC.elapsedSinceExpiryHours !== 0) {
+    console.error(`❌ FAIL Test C: Expected elapsedSinceExpiryHours = 0, got ${resC.elapsedSinceExpiryHours}`)
     allPassed = false
   } else {
-    console.log('✅ PASS Test C: elapsedSinceExpiryHours is ~49.43 (~2 days and 1 hour)')
+    console.log('✅ PASS Test C: elapsedSinceExpiryHours = 0 (not expired inside timeline)')
   }
 
-  if (resC.availabilityWindowDisplay !== '13h total — Expired') {
-    console.error(`❌ FAIL Test C: Expected availabilityWindowDisplay = "13h total — Expired", got "${resC.availabilityWindowDisplay}"`)
+  if (resC.availabilityWindowDisplay !== '13h total — Active') {
+    console.error(`❌ FAIL Test C: Expected availabilityWindowDisplay = "13h total — Active", got "${resC.availabilityWindowDisplay}"`)
     allPassed = false
   } else {
-    console.log('✅ PASS Test C: availabilityWindowDisplay = "13h total — Expired"')
+    console.log('✅ PASS Test C: availabilityWindowDisplay = "13h total — Active"')
   }
 
-  if (!resC.recommendation.includes('original 13h availability window')) {
-    console.error('❌ FAIL Test C: Recommendation should mention the original 13h availability window')
+  const mentions2DaysC = JSON.stringify(resC).includes('2 day')
+  if (mentions2DaysC) {
+    console.error('❌ FAIL Test C: Incorrectly mentions "2 day" for historical timeline assessment!')
     allPassed = false
   } else {
-    console.log('✅ PASS Test C: Recommendation mentions original 13h availability window')
+    console.log('✅ PASS Test C: Does NOT mention 2 days old')
   }
 
   // ─────────────────────────────────────────────────────────────────────────────

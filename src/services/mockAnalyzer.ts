@@ -852,7 +852,7 @@ function deriveStorageRecommendation(
 
 function addContextualGuidance(base: string[], input: AnalysisInput): string[] {
   const extra: string[] = []
-  const notes = input.additionalInfo.toLowerCase()
+  const notes = (input.additionalInfo || '').toLowerCase()
 
   if (notes.includes('gluten') || notes.includes('wheat')) {
     extra.push('Contains gluten — communicate clearly to recipient organisations for allergy management.')
@@ -1209,23 +1209,35 @@ export async function runAnalysis(
   }
 
   // ── Compute time values from validated timestamps ─────────────────────────
-  const { prepTime, untilTime, nowTime } = dateResult
-  const foodAgeHours = computeFoodAgeHours(prepTime, nowTime)
+  const { prepTime, untilTime, nowTime: actualNow } = dateResult
   const hasAvailabilityUntil = untilTime > 0
-  const remainingHours = computeRemainingHoursFromTimes(untilTime, nowTime)
   const availabilityWindowHours = computeWindowHoursFromTimes(prepTime, untilTime)
-  const isExpired = hasAvailabilityUntil && nowTime >= untilTime
+
+  // Assessment mode selection:
+  // - If BOTH prepTime and untilTime are clearly in the past relative to actual current time (>24h past deadline),
+  //   recognize historical timeline and select deterministic midpoint inside the submitted window.
+  // - Otherwise, live mode: use actual current time.
+  const isHistorical = hasAvailabilityUntil && (actualNow - untilTime >= 24 * 60 * 60 * 1000)
+  const assessmentMode: 'live' | 'historical_demo' = isHistorical ? 'historical_demo' : 'live'
+  const assessmentTime = isHistorical
+    ? prepTime + (untilTime - prepTime) / 2
+    : actualNow
+
+  const assessmentBasis = isHistorical
+    ? 'Assessment based on the submitted donation timeline.'
+    : 'Assessment based on the submitted donation timeline and current time.'
+
+  // ALL downstream time calculations use assessmentTime:
+  const foodAgeHours = computeFoodAgeHours(prepTime, assessmentTime)
+  const remainingHours = computeRemainingHoursFromTimes(untilTime, assessmentTime)
+  const isExpired = hasAvailabilityUntil && assessmentTime >= untilTime
   const availabilityStatus: 'Active' | 'Expired' = isExpired ? 'Expired' : 'Active'
-  const elapsedSinceExpiryHours = isExpired ? Math.max(0, (nowTime - untilTime) / (1000 * 60 * 60)) : 0
+  const elapsedSinceExpiryHours = isExpired ? Math.max(0, (assessmentTime - untilTime) / (1000 * 60 * 60)) : 0
   const remainingAvailabilityHours = isExpired ? 0 : remainingHours
   const availabilityWindowDisplay = availabilityWindowHours > 0
     ? `${Math.round(availabilityWindowHours)}h total — ${availabilityStatus}`
     : `Unspecified — ${availabilityStatus}`
   const foodAgeAtAssessment = formatDuration(foodAgeHours)
-  const assessmentMode: 'live' | 'historical_demo' = isExpired ? 'historical_demo' : 'live'
-  const assessmentBasis = isExpired
-    ? 'Assessment based on the submitted donation timeline.'
-    : 'Assessment based on the submitted donation timeline and current time.'
 
 
   // ── Storage condition check — secondary safety signal ────────────────────
@@ -1364,7 +1376,7 @@ export async function runAnalysis(
     requiresHumanVerification: true,
 
     // Metadata
-    analysedAt: new Date(nowTime).toISOString(),
+    analysedAt: new Date(assessmentTime).toISOString(),
     estimatedServings,
   }
 }
