@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import PageHeader from '../components/common/PageHeader'
 import { PriorityBadge } from '../components/common/StatusBadge'
-import { demoAnalysisResult, demoDonations } from '../data/demoData'
 import { analyseFood, FoodAnalysisValidationError, FoodAnalysisServiceError } from '../services/aiService'
 import type { DonationFormData, FoodAnalysisResult, DonationSuitability } from '../types'
 import styles from './FoodAnalysisPage.module.css'
@@ -53,10 +52,18 @@ function LoadingState() {
   )
 }
 
-function ErrorState({ message, onRetry }: { message: string; onRetry: () => void }) {
+// ─── Error banner component ───────────────────────────────────────────────────
+
+function ErrorState({
+  message,
+  onRetry,
+}: {
+  message: string
+  onRetry: () => void
+}) {
   return (
-    <div className={`notice notice-warning ${styles.errorState}`}>
-      <span>⚠</span>
+    <div className={`notice notice-critical mb-6 ${styles.errorBanner}`}>
+      <span className={styles.errorIcon}>⚠</span>
       <div>
         <strong>Analysis could not be completed</strong>
         <p className="mt-2">{message}</p>
@@ -74,12 +81,9 @@ export default function FoodAnalysisPage() {
   const formData = getFormData()
   const isLiveSubmission = formData !== null
 
-  // Fallback donation for display when no form data (direct navigation to /analysis)
-  const displayDonation = formData ?? demoDonations[0]
+  const displayDonation = formData
 
-  const [analysis, setAnalysis] = useState<FoodAnalysisResult | null>(
-    isLiveSubmission ? null : demoAnalysisResult,
-  )
+  const [analysis, setAnalysis] = useState<FoodAnalysisResult | null>(null)
   const [isLoading, setIsLoading] = useState(isLiveSubmission)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
@@ -94,7 +98,7 @@ export default function FoodAnalysisPage() {
       try {
         sessionStorage.setItem('analysisResult', JSON.stringify(result))
       } catch {
-        // sessionStorage write failure is non-fatal — matching page will fall back to demo
+        // sessionStorage write failure is non-fatal
       }
     } catch (err) {
       if (err instanceof FoodAnalysisValidationError) {
@@ -122,20 +126,22 @@ export default function FoodAnalysisPage() {
         <PageHeader
           title="Food Analysis"
           subtitle="AI-generated advisory assessment of the submitted food donation."
-          tag={isLiveSubmission ? 'AI Advisory' : 'Demo Data'}
+          tag="AI Advisory"
         />
 
-        {!isLiveSubmission && (
-          <div className="notice notice-info mb-6">
-            <span>ℹ</span>
-            <span>
-              Showing demo analysis results. Submit a donation via the{' '}
-              <Link to="/donate">Donate Food</Link> page to see results based on your input.
-            </span>
+        {!isLiveSubmission || !displayDonation ? (
+          <div className="card text-center py-12">
+            <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>📋</div>
+            <h2 className="text-xl font-semibold mb-2">No Active Food Submission Found</h2>
+            <p className="text-muted mb-6" style={{ maxWidth: '500px', margin: '0 auto 1.5rem' }}>
+              Submit surplus food details through the donation form to generate an automated food-safety, shelf-life, and redistribution assessment.
+            </p>
+            <Link to="/donate" className="btn btn-primary">
+              Submit Food Donation
+            </Link>
           </div>
-        )}
-
-        <div className={styles.layout}>
+        ) : (
+          <div className={styles.layout}>
           {/* ── Left col: Food summary + Human verification ──────────────── */}
           <div className={styles.leftCol}>
             <section className={`card ${styles.summaryCard}`}>
@@ -338,8 +344,12 @@ export default function FoodAnalysisPage() {
                   <h3 className={styles.subCardTitle}>AI reasoning</h3>
                   <p className={styles.reasoning}>{analysis.reasoning}</p>
                   <div className={styles.analysedAt}>
-                    Analysis generated: {new Date(analysis.analysedAt).toLocaleString()}
-                    {!isLiveSubmission && ' (demo)'}
+                    <div>Analysis generated: {new Date(analysis.analysedAt).toLocaleString()}</div>
+                    {analysis.assessmentBasis && (
+                      <div style={{ marginTop: '0.35rem', fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>
+                        {analysis.assessmentBasis}
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -355,6 +365,7 @@ export default function FoodAnalysisPage() {
             )}
           </div>
         </div>
+        )}
       </div>
     </div>
   )

@@ -100,6 +100,10 @@ export interface FoodAnalysisResult {
   remainingAvailabilityHours?: number
   /** Hours elapsed since availability deadline expired (0 if still active). */
   elapsedSinceExpiryHours?: number
+  /** Timeline assessment mode (internal classification). */
+  assessmentMode?: 'live' | 'historical_demo' | 'future_invalid'
+  /** User-facing assessment basis explanation. */
+  assessmentBasis?: string
 
   // ── Safety & suitability ─────────────────────────────────────────────────
   /**

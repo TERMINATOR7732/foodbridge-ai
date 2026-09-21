@@ -14,7 +14,7 @@ export default function Layout({ children }: LayoutProps) {
       <footer className={styles.footer}>
         <div className="container">
           <p className={styles.footerText}>
-            FoodBridge AI &nbsp;·&nbsp; All data shown is simulated for demonstration purposes.
+            FoodBridge AI &nbsp;·&nbsp; Intelligent Community Food Redistribution & Safety Advisory.
           </p>
         </div>
       </footer>

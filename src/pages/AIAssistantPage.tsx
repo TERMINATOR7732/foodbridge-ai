@@ -82,9 +82,9 @@ export default function AIAssistantPage() {
         <div className="notice notice-info mb-6">
           <span>ℹ</span>
           <span>
-            <strong>Advisory assistant:</strong> The assistant provides illustrative responses
-            to help you understand how the platform works. Responses are for demonstration
-            purposes and should not replace food safety expertise or regulatory guidance.
+            <strong>Advisory assistant:</strong> The assistant provides guidance on food safety,
+            category handling rules, matching criteria, and platform workflows. Advisory responses
+            support human decisions and do not replace certified food safety inspections.
           </span>
         </div>
 

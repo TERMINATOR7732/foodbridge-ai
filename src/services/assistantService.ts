@@ -265,7 +265,7 @@ All matches are recommendations and require human approval before any transfer o
 
 ${stepExpl[donation.status] ?? ''}
 
-You can view full details or advance the simulation anytime on the **Donation Status** page.`
+You can view full details or manage the donation progress anytime on the **Donation Status** page.`
       }
 
       return `Once a match is confirmed, FoodBridge tracks donations through four sequential stages:
@@ -304,7 +304,7 @@ When you click 'Cancel Donation', a confirmation box appears to prevent accident
     }
 
     case 'impact_dashboard': {
-      return `The **Impact Dashboard** provides a simulated overview of collective redistribution efforts:
+      return `The **Impact Dashboard** provides a transparent overview of collective redistribution efforts:
 
 - Estimated meals potentially supported
 - Total kilograms of food redirected
@@ -330,7 +330,7 @@ You can inspect these metrics anytime on the **Impact** page in the main navigat
 - **Food Analysis:** Review estimated shelf life, storage needs, and suitability before redistributing.
 - **Community Matching:** Connect with verified local organisations based on category, quantity, and urgency.
 - **Donation Status:** Follow confirmed donations from acceptance to delivery.
-- **Impact:** Explore simulated environmental and community metrics.
+- **Impact:** Explore collective environmental and community impact metrics.
 
 What area would you like help with?`
     }

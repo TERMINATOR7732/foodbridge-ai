@@ -323,13 +323,11 @@ export default function DonationStatusPage() {
         {!isTerminal && (
           <div className={`card ${styles.actionsCard}`}>
             <div className={styles.actionsHeader}>
-              <h2 className={styles.detailCardTitle}>Demo Controls</h2>
-              <span className="demo-label">Simulation</span>
+              <h2 className={styles.detailCardTitle}>Status Management</h2>
+              <span className="demo-label">Coordinator Action</span>
             </div>
             <p className={styles.actionsDesc}>
-              In a live deployment, status advances would be triggered by the recipient
-              organisation or a logistics coordinator. Use these controls to advance the
-              donation status and explore the full lifecycle.
+              Update the distribution status as operations proceed through dispatch, transit, and handover verification.
             </p>
 
             <div className={styles.actionButtons}>

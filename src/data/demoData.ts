@@ -192,6 +192,8 @@ export const demoAnalysisResult: FoodAnalysisResult = {
   // Metadata
   analysedAt: '2025-07-14T10:35:00',
   estimatedServings: 25,
+  assessmentMode: 'historical_demo',
+  assessmentBasis: 'Assessment based on the submitted donation timeline.',
 }
 
 // ─── Demo Impact Metrics ──────────────────────────────────────────────────────

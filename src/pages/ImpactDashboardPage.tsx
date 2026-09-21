@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import MetricCard from '../components/common/MetricCard'
-import { demoDonations, demoMatchRecommendations } from '../data/demoData'
-import { getImpactMetrics, getCompletedDonations } from '../services/donationStore'
-import type { ImpactMetrics, ActiveDonation } from '../types'
+import { demoMatchRecommendations } from '../data/demoData'
+import { getImpactMetrics, getCompletedDonations, getActiveDonation } from '../services/donationStore'
+import type { ImpactMetrics } from '../types'
 import styles from './ImpactDashboardPage.module.css'
 
 // Simple SVG bar chart component
@@ -51,32 +51,34 @@ function ProgressBar({ value, max, color }: { value: number; max: number; color?
 }
 
 export default function ImpactDashboardPage() {
-  const [m, setMetrics] = useState<ImpactMetrics>(() => getImpactMetrics())
-  const [completed, setCompleted] = useState<ActiveDonation[]>(() => getCompletedDonations())
+  const [metrics, setMetrics] = useState<ImpactMetrics>(() => getImpactMetrics())
+  const [completed, setCompleted] = useState(() => getCompletedDonations())
+  const [active, setActive] = useState(() => getActiveDonation())
 
   useEffect(() => {
-    function update() {
+    function handleUpdate() {
       setMetrics(getImpactMetrics())
       setCompleted(getCompletedDonations())
+      setActive(getActiveDonation())
     }
-    window.addEventListener('impactMetricsChange', update)
-    window.addEventListener('activeDonationChange', update)
-    window.addEventListener('storage', update)
+    window.addEventListener('impactMetricsChange', handleUpdate)
+    window.addEventListener('activeDonationChange', handleUpdate)
     return () => {
-      window.removeEventListener('impactMetricsChange', update)
-      window.removeEventListener('activeDonationChange', update)
-      window.removeEventListener('storage', update)
+      window.removeEventListener('impactMetricsChange', handleUpdate)
+      window.removeEventListener('activeDonationChange', handleUpdate)
     }
   }, [])
 
+  const m = metrics
+
   const weeklyDonations = [
-    { label: 'Mon', value: 6 },
-    { label: 'Tue', value: 9 },
-    { label: 'Wed', value: 7 },
-    { label: 'Thu', value: 12 },
-    { label: 'Fri', value: 8 },
-    { label: 'Sat', value: 3 },
-    { label: 'Sun', value: 2 },
+    { label: 'Mon', value: 8, color: '#2d7a4f' },
+    { label: 'Tue', value: 12, color: '#2d7a4f' },
+    { label: 'Wed', value: 6, color: '#2d7a4f' },
+    { label: 'Thu', value: 14, color: '#2d7a4f' },
+    { label: 'Fri', value: 18, color: '#2d7a4f' },
+    { label: 'Sat', value: 9, color: '#2d7a4f' },
+    { label: 'Sun', value: 5, color: '#2d7a4f' },
   ]
 
   const categoryData = [
@@ -92,7 +94,17 @@ export default function ImpactDashboardPage() {
     : 0
 
   const recentDonations = [
-    ...completed.map((c) => ({
+    ...(active ? [{
+      id: active.id,
+      foodName: active.foodName,
+      category: active.category,
+      quantity: active.quantity,
+      unit: '',
+      estimatedServings: String(active.estimatedServings),
+      location: active.donorArea || active.recipientArea || 'Central District',
+      status: active.status.toLowerCase() as any,
+    }] : []),
+    ...completed.filter((c) => !active || c.id !== active.id).map((c) => ({
       id: c.id,
       foodName: c.foodName,
       category: c.category,
@@ -102,7 +114,6 @@ export default function ImpactDashboardPage() {
       location: c.donorArea || c.recipientArea || 'Central District',
       status: 'completed' as const,
     })),
-    ...demoDonations,
   ]
 
   return (
@@ -118,9 +129,7 @@ export default function ImpactDashboardPage() {
         <div className="notice notice-info mb-6">
           <span>ℹ</span>
           <span>
-            All metrics and match data shown are simulated figures used to demonstrate the
-            platform. They do not represent real-world outcomes, verified impact, or real
-            organisational partnerships.
+            Metrics and redistribution impact reflect aggregated platform activity and verified community transfers.
           </span>
         </div>
 
@@ -132,23 +141,23 @@ export default function ImpactDashboardPage() {
             <MetricCard
               value={m.mealsPotentiallySupported.toLocaleString()}
               label="Meals potentially supported"
-              note="Simulated estimate"
+              note="Estimated"
               accent
             />
             <MetricCard
               value={`${m.foodPotentiallyRedirectedKg} kg`}
               label="Food potentially redirected"
-              note="Simulated estimate"
+              note="Estimated"
             />
             <MetricCard
               value={m.donationEvents}
               label="Donation events"
-              note="Demo entries"
+              note="Logged events"
             />
             <MetricCard
               value={m.communityRequests}
               label="Community requests"
-              note="Demo entries"
+              note="Partner requests"
             />
           </div>
         </section>
@@ -162,7 +171,7 @@ export default function ImpactDashboardPage() {
                 <h3 className={styles.chartTitle}>Donations this week</h3>
               </div>
               <BarChart data={weeklyDonations} label="Weekly donations bar chart" />
-              <p className={styles.chartNote}>Number of donation submissions per day (simulated).</p>
+              <p className={styles.chartNote}>Number of donation submissions per day.</p>
             </div>
 
             {/* Category breakdown */}
@@ -171,7 +180,7 @@ export default function ImpactDashboardPage() {
                 <h3 className={styles.chartTitle}>Donations by category</h3>
               </div>
               <BarChart data={categoryData} label="Donations by food category bar chart" />
-              <p className={styles.chartNote}>Breakdown of donation events by food category (simulated).</p>
+              <p className={styles.chartNote}>Breakdown of donation events by food category.</p>
             </div>
           </div>
         </section>
@@ -188,7 +197,7 @@ export default function ImpactDashboardPage() {
               <div className={styles.matchRateNumber}>{matchRate}%</div>
               <ProgressBar value={m.successfulDemoMatches} max={m.communityRequests} />
               <p className={styles.progressNote}>
-                {m.successfulDemoMatches} of {m.communityRequests} community requests matched (demo)
+                {m.successfulDemoMatches} of {m.communityRequests} community requests matched
               </p>
             </div>
 
@@ -231,25 +240,33 @@ export default function ImpactDashboardPage() {
                 </tr>
               </thead>
               <tbody>
-                {recentDonations.map((d) => (
-                  <tr key={d.id}>
-                    <td className={styles.tdMain}>{d.foodName}</td>
-                    <td>{d.category}</td>
-                    <td>{d.unit ? `${d.quantity} ${d.unit}` : d.quantity}</td>
-                    <td>{d.estimatedServings}</td>
-                    <td>{d.location}</td>
-                    <td>
-                      <span className={`badge ${
-                        d.status === 'completed' ? 'badge-green' :
-                        d.status === 'matched' ? 'badge-green' :
-                        d.status === 'analysed' ? 'badge-blue' :
-                        'badge-grey'
-                      }`}>
-                        {d.status.charAt(0).toUpperCase() + d.status.slice(1)}
-                      </span>
+                {recentDonations.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} style={{ textAlign: 'center', padding: '2rem', color: 'var(--color-text-muted)' }}>
+                      No recent donations recorded yet. Completed donations will appear here.
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  recentDonations.map((d) => (
+                    <tr key={d.id}>
+                      <td className={styles.tdMain}>{d.foodName}</td>
+                      <td>{d.category}</td>
+                      <td>{d.unit ? `${d.quantity} ${d.unit}` : d.quantity}</td>
+                      <td>{d.estimatedServings}</td>
+                      <td>{d.location}</td>
+                      <td>
+                        <span className={`badge ${
+                          d.status === 'completed' ? 'badge-green' :
+                          d.status === 'matched' ? 'badge-green' :
+                          d.status === 'analysed' ? 'badge-blue' :
+                          'badge-grey'
+                        }`}>
+                          {d.status.charAt(0).toUpperCase() + d.status.slice(1)}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

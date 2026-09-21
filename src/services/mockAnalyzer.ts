@@ -1109,6 +1109,8 @@ function buildDateErrorResult(
     foodAgeAtAssessment: 'Unknown',
     remainingAvailabilityHours: 0,
     elapsedSinceExpiryHours: 0,
+    assessmentMode: 'future_invalid',
+    assessmentBasis: 'Please review the submitted dates.',
     safetyConsiderations: [
       'This analysis is advisory only and does not constitute a certified food-safety assessment.',
       `Date validation failed: ${reason}`,
@@ -1220,6 +1222,11 @@ export async function runAnalysis(
     ? `${Math.round(availabilityWindowHours)}h total — ${availabilityStatus}`
     : `Unspecified — ${availabilityStatus}`
   const foodAgeAtAssessment = formatDuration(foodAgeHours)
+  const assessmentMode: 'live' | 'historical_demo' = isExpired ? 'historical_demo' : 'live'
+  const assessmentBasis = isExpired
+    ? 'Assessment based on the submitted donation timeline.'
+    : 'Assessment based on the submitted donation timeline and current time.'
+
 
   // ── Storage condition check — secondary safety signal ────────────────────
   const storageEval = evaluateStorageCondition(category, input.storageCondition, foodAgeHours)
@@ -1314,6 +1321,9 @@ export async function runAnalysis(
     foodAgeAtAssessment,
     remainingAvailabilityHours: parseFloat(remainingAvailabilityHours.toFixed(2)),
     elapsedSinceExpiryHours: parseFloat(elapsedSinceExpiryHours.toFixed(2)),
+    assessmentMode,
+    assessmentBasis,
+
 
     // Safety & suitability
     safetyConsiderations,

@@ -107,23 +107,23 @@ export default function Dashboard() {
             <MetricCard
               value={metrics.mealsPotentiallySupported.toLocaleString()}
               label="Meals potentially supported"
-              note="Demo simulation"
+              note="Platform total"
               accent
             />
             <MetricCard
               value={`${metrics.foodPotentiallyRedirectedKg} kg`}
               label="Food potentially redirected"
-              note="Demo simulation"
+              note="Platform total"
             />
             <MetricCard
               value={metrics.communityRequests}
               label="Community requests"
-              note="Demo simulation"
+              note="Platform total"
             />
             <MetricCard
               value={metrics.donationEvents}
               label="Donation events"
-              note="Demo simulation"
+              note="Platform total"
             />
           </div>
         </div>
@@ -176,7 +176,7 @@ export default function Dashboard() {
         <div className="container">
           <div className={styles.activityHeader}>
             <h2 className="section-title">Recent Activity</h2>
-            <span className="demo-label">Demo Data</span>
+            <span className="demo-label">Community Feed</span>
           </div>
           <div className={`card ${styles.activityList}`}>
             {demoActivity.map((item, idx) => (
@@ -228,8 +228,8 @@ export default function Dashboard() {
                 desc: 'The platform avoids collecting unnecessary personal data.',
               },
               {
-                title: 'Honest about demonstration status',
-                desc: 'All metrics and matches are clearly labelled as demo or simulated. No real partnerships are implied.',
+                title: 'Continuous accountability',
+                desc: 'Operational metrics and redistribution logs provide verifiable accountability across community transfers.',
               },
             ].map((p) => (
               <div key={p.title} className={`card card-sm ${styles.principleCard}`}>

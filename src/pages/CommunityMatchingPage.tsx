@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import PageHeader from '../components/common/PageHeader'
 import { UrgencyBadge, RequestStatusBadge, PriorityBadge } from '../components/common/StatusBadge'
-import { demoCommunityRequests, demoMatchRecommendations } from '../data/demoData'
+import { demoCommunityRequests } from '../data/demoData'
 import { matchFromAnalysis } from '../services/matchingService'
 import { saveActiveDonation } from '../services/donationStore'
 import type {
@@ -293,7 +293,7 @@ export default function CommunityMatchingPage() {
     ? matchingResult.matches
     : null
 
-  const pageTag = isLiveMatch ? 'Live Match' : 'Demo Data'
+  const pageTag = isLiveMatch ? 'Live Match' : 'Community Requests'
   const pageSubtitle = isLiveMatch
     ? `Matching results for: ${analysisResult!.foodName}`
     : 'Review community food requests and AI-generated match recommendations.'
@@ -347,10 +347,10 @@ export default function CommunityMatchingPage() {
         <section className={styles.section}>
           <div className={styles.sectionHeader}>
             <h2 className="section-title">Community Requests</h2>
-            <span className="demo-label">Demo Data</span>
+            <span className="demo-label">Open Requests</span>
           </div>
           <p className="section-subtitle">
-            Active requests from community organisations. Data shown is simulated for demonstration.
+            Active food requests from registered community partners and distribution hubs.
           </p>
           <div className={styles.requestGrid}>
             {demoCommunityRequests.map((req) => (
@@ -484,19 +484,14 @@ export default function CommunityMatchingPage() {
           )}
 
           {!isLiveMatch && !isLoading && !matchError && (
-            <>
-              <div className={styles.matchList}>
-                <DemoMatchList />
-              </div>
-              <div className="notice notice-info mt-6">
-                <span>ℹ</span>
-                <span>
-                  <strong>Demo mode:</strong> No food analysis was submitted in this session.
-                  Submit a donation via <Link to="/donate">Donate Food</Link> and proceed through
-                  Food Analysis to see live matching results here.
-                </span>
-              </div>
-            </>
+            <div className="card text-center py-8">
+              <p className="text-muted mb-4">
+                No active food analysis is linked to this session. Submit a donation through the donation form to generate tailored community matches.
+              </p>
+              <Link to="/donate" className="btn btn-primary btn-sm">
+                Submit Food Donation
+              </Link>
+            </div>
           )}
         </section>
 
@@ -509,41 +504,3 @@ export default function CommunityMatchingPage() {
   )
 }
 
-// ─── Demo fallback ────────────────────────────────────────────────────────────
-
-function DemoMatchList() {
-  return (
-    <>
-      {demoMatchRecommendations.map((rec, idx) => (
-        <div key={rec.id} className={`card ${styles.matchCard}`}>
-          <div className={styles.matchHeader}>
-            <div>
-              <span className={styles.matchIndex}>Match {idx + 1}</span>
-              <div className={styles.matchOrg}>{rec.organizationName}</div>
-            </div>
-            <PriorityBadge priority={rec.priority} />
-          </div>
-          <div className={styles.matchBody}>
-            <div className={styles.matchScoreSection}>
-              <div className={styles.scoreLabel}>Match score</div>
-              <MatchScoreBar score={rec.matchScore} />
-            </div>
-            <div className={styles.matchDetail}>
-              <div className={styles.matchDetailRow}>
-                <span className={styles.detailLabel}>Recommended quantity</span>
-                <span className={styles.detailValue}>{rec.recommendedQuantity}</span>
-              </div>
-              <div className={styles.matchDetailRow}>
-                <span className={styles.detailLabel}>Reason</span>
-                <span className={styles.detailValue}>{rec.reason}</span>
-              </div>
-            </div>
-          </div>
-          <div className={styles.matchFooter}>
-            <span className={styles.approvalLabel}>Demo data — no confirmation available</span>
-          </div>
-        </div>
-      ))}
-    </>
-  )
-}
