@@ -37,12 +37,17 @@ jobs:
 
       - name: Verify build output
         run: |
-          echo "--- dist/ contents ---"
-          ls -la dist/
-          echo "--- dist/assets/ contents ---"
-          ls -la dist/assets/
-          echo "--- dist/index.html head (asset references) ---"
-          head -30 dist/index.html
+          echo "--- Verifying dist/ output ---"
+          test -f dist/index.html || { echo "ERROR: dist/index.html does not exist"; exit 1; }
+          if grep -q '/src/main.tsx' dist/index.html; then
+            echo "ERROR: dist/index.html still references /src/main.tsx"
+            exit 1
+          fi
+          test -f dist/404.html || { echo "ERROR: dist/404.html does not exist"; exit 1; }
+          test -f dist/.nojekyll || { echo "ERROR: dist/.nojekyll does not exist"; exit 1; }
+          ls dist/assets/*.js 1> /dev/null 2>&1 || { echo "ERROR: Required JS assets missing in dist/assets/"; exit 1; }
+          ls dist/assets/*.css 1> /dev/null 2>&1 || { echo "ERROR: Required CSS assets missing in dist/assets/"; exit 1; }
+          echo "SUCCESS: Build verification passed. All artifacts present."
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3

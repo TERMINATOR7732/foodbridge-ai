@@ -15,7 +15,7 @@
           });
           window.history.replaceState(
             null, null,
-            l.pathname.slice(0, -1) + decoded[0] +
+            l.pathname.replace(/\/$/, '') + decoded[0] +
             (decoded[1] ? '?' + decoded[1] : '') +
             l.hash
           );
