@@ -35,6 +35,15 @@ jobs:
       - name: Build production bundle
         run: npm run build
 
+      - name: Verify build output
+        run: |
+          echo "--- dist/ contents ---"
+          ls -la dist/
+          echo "--- dist/assets/ contents ---"
+          ls -la dist/assets/
+          echo "--- dist/index.html head (asset references) ---"
+          head -30 dist/index.html
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
