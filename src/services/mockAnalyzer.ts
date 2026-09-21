@@ -71,42 +71,72 @@ type DateValidationResult =
   | { valid: true; prepTime: number; untilTime: number; nowTime: number }
   | { valid: false; reason: string }
 
-function validateDates(preparationDate: string, availabilityUntil: string): DateValidationResult {
-  const now = Date.now()
+function parseFlexibleDate(str: string): number {
+  if (!str || str.trim() === '') return NaN
+  const d = new Date(str)
+  if (!isNaN(d.getTime())) return d.getTime()
+  // Support DD/MM/YYYY, HH:MM AM/PM formats
+  const m = str.match(
+    /^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})[,\s]+(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)?$/i,
+  )
+  if (m) {
+    const [, day, month, year, hours, mins, secs, ampm] = m
+    let h = parseInt(hours, 10)
+    if (ampm) {
+      if (ampm.toUpperCase() === 'PM' && h < 12) h += 12
+      if (ampm.toUpperCase() === 'AM' && h === 12) h = 0
+    }
+    const parsed = new Date(
+      parseInt(year, 10),
+      parseInt(month, 10) - 1,
+      parseInt(day, 10),
+      h,
+      parseInt(mins, 10),
+      secs ? parseInt(secs, 10) : 0,
+    )
+    if (!isNaN(parsed.getTime())) return parsed.getTime()
+  }
+  return NaN
+}
 
+function validateDates(
+  preparationDate: string,
+  availabilityUntil: string,
+  nowTime: number = Date.now(),
+): DateValidationResult {
   // ── Parse prep date ────────────────────────────────────────────────────────
   if (!preparationDate || preparationDate.trim() === '') {
     return { valid: false, reason: 'Preparation date was not provided.' }
   }
-  const prep = new Date(preparationDate)
-  if (isNaN(prep.getTime())) {
+  const prepTime = parseFlexibleDate(preparationDate)
+  if (isNaN(prepTime)) {
     return { valid: false, reason: 'Preparation date could not be parsed — please check the format.' }
   }
-  if (prep.getTime() > now + 60 * 60 * 1000) {
+  if (prepTime > nowTime + 60 * 60 * 1000) {
     // Allow up to 1 hour tolerance for timezone/clock skew; anything beyond is invalid
     return {
       valid: false,
-      reason: `The preparation date (${prep.toLocaleDateString()}) is in the future. Food cannot have been prepared at a future time.`,
+      reason: `The preparation date (${new Date(prepTime).toLocaleDateString()}) is in the future. Food cannot have been prepared at a future time.`,
     }
   }
 
   // ── Parse available-until date ─────────────────────────────────────────────
   if (!availabilityUntil || availabilityUntil.trim() === '') {
     // Missing until-date is allowed; we will work without it
-    return { valid: true, prepTime: prep.getTime(), untilTime: 0, nowTime: now }
+    return { valid: true, prepTime, untilTime: 0, nowTime }
   }
-  const until = new Date(availabilityUntil)
-  if (isNaN(until.getTime())) {
+  const untilTime = parseFlexibleDate(availabilityUntil)
+  if (isNaN(untilTime)) {
     return { valid: false, reason: 'Available-until date could not be parsed — please check the format.' }
   }
-  if (until.getTime() < prep.getTime()) {
+  if (untilTime < prepTime) {
     return {
       valid: false,
-      reason: `The available-until date (${until.toLocaleDateString()}) is earlier than the preparation date (${prep.toLocaleDateString()}). Please verify the dates.`,
+      reason: `The available-until date (${new Date(untilTime).toLocaleDateString()}) is earlier than the preparation date (${new Date(prepTime).toLocaleDateString()}). Please verify the dates.`,
     }
   }
 
-  return { valid: true, prepTime: prep.getTime(), untilTime: until.getTime(), nowTime: now }
+  return { valid: true, prepTime, untilTime, nowTime }
 }
 
 // ─── Food age calculation ─────────────────────────────────────────────────────
@@ -151,15 +181,13 @@ interface AgeThresholds {
 }
 
 const AGE_THRESHOLDS: Record<FoodCategory, AgeThresholds> = {
-  //
-  // Prepared Meals: hot food is extremely time-sensitive
-  //   0–4 h     → fresh
-  //   4–8 h     → caution (refrigerated within a few hours of cooking)
-  //   8–24 h    → stale
-  //   >24 h     → not recommended
-  'Prepared Meals': { freshHours: 4, cautionHours: 8, staleHours: 24 },
+  // Prepared Meals default (refrigerated cooked meals):
+  //   0–24 h    → fresh (Suitable)
+  //   24–48 h   → caution (Suitable with Conditions - verify cold chain & reheating)
+  //   48–72 h   → review required (Requires Review - coordinator direct assessment)
+  //   >72 h     → not recommended for community redistribution
+  'Prepared Meals': { freshHours: 24, cautionHours: 48, staleHours: 72 },
 
-  //
   // Fresh Produce: typically lasts 2–5 days refrigerated
   //   0–48 h    → fresh
   //   48–96 h   → caution
@@ -167,7 +195,6 @@ const AGE_THRESHOLDS: Record<FoodCategory, AgeThresholds> = {
   //   >168 h    → not recommended
   'Fresh Produce': { freshHours: 48, cautionHours: 96, staleHours: 168 },
 
-  //
   // Bakery & Bread: best same-day; tolerable for a few days; stale after ~1 week
   //   0–24 h    → fresh (same day)
   //   24–72 h   → caution (1–3 days)
@@ -175,7 +202,6 @@ const AGE_THRESHOLDS: Record<FoodCategory, AgeThresholds> = {
   //   >168 h    → not recommended   (>7 days)
   'Bakery & Bread': { freshHours: 24, cautionHours: 72, staleHours: 168 },
 
-  //
   // Dairy & Eggs: refrigerated shelf life typically 3–7 days after opening;
   //   0–24 h    → fresh
   //   24–72 h   → caution
@@ -183,7 +209,6 @@ const AGE_THRESHOLDS: Record<FoodCategory, AgeThresholds> = {
   //   >168 h    → not recommended
   'Dairy & Eggs': { freshHours: 24, cautionHours: 72, staleHours: 168 },
 
-  //
   // Canned & Packaged: shelf-stable; age of submission is less relevant
   // unless the can was opened or the packaging was removed.
   // Using a wide window but still flagging very old open packaging.
@@ -193,7 +218,6 @@ const AGE_THRESHOLDS: Record<FoodCategory, AgeThresholds> = {
   //   >720 h    → not recommended (>30 days since tracking began)
   'Canned & Packaged': { freshHours: 72, cautionHours: 168, staleHours: 720 },
 
-  //
   // Beverages: opened beverages spoil quickly; sealed ones are shelf-stable.
   // Treating conservatively as opened/chilled unless noted otherwise.
   //   0–24 h    → fresh
@@ -202,7 +226,6 @@ const AGE_THRESHOLDS: Record<FoodCategory, AgeThresholds> = {
   //   >168 h    → not recommended
   Beverages: { freshHours: 24, cautionHours: 72, staleHours: 168 },
 
-  //
   // Frozen: age since freezing is less critical if properly stored,
   // but very long-frozen items may have quality concerns.
   //   0–720 h   → fresh  (0–30 days)
@@ -211,9 +234,43 @@ const AGE_THRESHOLDS: Record<FoodCategory, AgeThresholds> = {
   //   >2160 h   → not recommended (>90 days)
   Frozen: { freshHours: 720, cautionHours: 1440, staleHours: 2160 },
 
-  //
   // Other: use conservative default
   Other: { freshHours: 24, cautionHours: 48, staleHours: 96 },
+}
+
+/**
+ * Returns storage-sensitive age thresholds.
+ * Cooked prepared meals stored at room temperature are in the danger zone (5°C–60°C)
+ * and must be consumed/redistributed rapidly, whereas refrigerated prepared meals
+ * remain viable across multiple days under continuous cold chain.
+ */
+function getCategoryThresholds(
+  category: FoodCategory,
+  storageCondition: string = '',
+): AgeThresholds {
+  const normStorage = storageCondition.trim().toLowerCase()
+  if (category === 'Prepared Meals') {
+    if (normStorage === 'room temperature') {
+      // Danger zone: 2h fresh, 3h caution, 4h stale (beyond 4h is unsafe)
+      return { freshHours: 2, cautionHours: 3, staleHours: 4 }
+    }
+    if (normStorage === 'frozen') {
+      return { freshHours: 720, cautionHours: 1440, staleHours: 2160 }
+    }
+    // Refrigerated (or keep cool/default) cooked meals:
+    // 0-24h fresh (Suitable), 24-48h caution (Suitable with Conditions),
+    // 48-72h review (Requires Review), >72h spoiled (Not Recommended)
+    return { freshHours: 24, cautionHours: 48, staleHours: 72 }
+  }
+
+  if (category === 'Dairy & Eggs') {
+    if (normStorage === 'room temperature') {
+      return { freshHours: 2, cautionHours: 3, staleHours: 4 }
+    }
+    return { freshHours: 24, cautionHours: 72, staleHours: 168 }
+  }
+
+  return AGE_THRESHOLDS[category]
 }
 
 // ─── Age evaluation result ────────────────────────────────────────────────────
@@ -238,8 +295,12 @@ interface AgeEvaluation {
   ageSafetyNote: string | null
 }
 
-function evaluateFoodAge(category: FoodCategory, foodAgeHours: number): AgeEvaluation {
-  const thresholds = AGE_THRESHOLDS[category]
+function evaluateFoodAge(
+  category: FoodCategory,
+  foodAgeHours: number,
+  storageCondition: string = '',
+): AgeEvaluation {
+  const thresholds = getCategoryThresholds(category, storageCondition)
   const ageHoursRounded = Math.round(foodAgeHours)
 
   // Format age for human-readable reasoning
@@ -271,26 +332,38 @@ function evaluateFoodAge(category: FoodCategory, foodAgeHours: number): AgeEvalu
   }
 
   if (foodAgeHours <= thresholds.cautionHours) {
+    const isRefrigMeal =
+      category === 'Prepared Meals' && storageCondition.toLowerCase().includes('refrig')
+    const cautionNote = isRefrigMeal
+      ? `Food is ${ageDescription} (refrigerated) — suitable with conditions. Verify continuous refrigeration at or below 5 °C and prompt reheat before distribution.`
+      : `Food is ${ageDescription} — suitability is reduced compared with a same-day donation. Coordinator should verify condition before redistribution.`
+
     return {
       foodAgeHours,
       ageBand: 'caution',
-      confidencePenalty: 0.10,
+      confidencePenalty: 0.05,
       suitabilityCap: 'Suitable with Conditions',
       agePriority: null,
       ageDescription,
-      ageSafetyNote: `Food is ${ageDescription} — suitability is reduced compared with a fresh donation. Coordinator should verify condition before redistribution.`,
+      ageSafetyNote: cautionNote,
     }
   }
 
   if (foodAgeHours <= thresholds.staleHours) {
+    const isRefrigMeal =
+      category === 'Prepared Meals' && storageCondition.toLowerCase().includes('refrig')
+    const staleNote = isRefrigMeal
+      ? `Prepared meal is ${ageDescription} (refrigerated) — reaches the upper advisory limit for cooked food redistribution. Coordinator review is required to verify appearance, odor, and continuous cold chain (<5 °C).`
+      : `Food is ${ageDescription} — this exceeds the typical redistribution window for ${category}. Coordinator review is required; do not redistribute without direct assessment.`
+
     return {
       foodAgeHours,
       ageBand: 'stale',
-      confidencePenalty: 0.20,
+      confidencePenalty: 0.12,
       suitabilityCap: 'Requires Review',
       agePriority: 'Low',
       ageDescription,
-      ageSafetyNote: `Food is ${ageDescription} — this exceeds the typical redistribution window for ${category}. Coordinator review is required; do not redistribute without direct assessment.`,
+      ageSafetyNote: staleNote,
     }
   }
 
@@ -298,11 +371,11 @@ function evaluateFoodAge(category: FoodCategory, foodAgeHours: number): AgeEvalu
   return {
     foodAgeHours,
     ageBand: 'spoiled',
-    confidencePenalty: 0.05, // small penalty — age is clearly calculable; penalty reflects advisory caution
+    confidencePenalty: 0.04,
     suitabilityCap: 'Not Recommended',
     agePriority: 'Low',
     ageDescription,
-    ageSafetyNote: `The reported preparation date indicates that this food has been stored for an extended period (${ageDescription}). This far exceeds the conservative advisory threshold for ${category} and the donation is not recommended for redistribution based on reported age. Human verification is required before any action.`,
+    ageSafetyNote: `The reported preparation date indicates that this food has been stored for an extended period (${ageDescription}). This exceeds the advisory shelf-life threshold for ${category} and the donation is not recommended for redistribution based on reported age. Human verification is required before any action.`,
   }
 }
 
@@ -310,10 +383,8 @@ function evaluateFoodAge(category: FoodCategory, foodAgeHours: number): AgeEvalu
 //
 // Conservative deterministic rules: flag obvious mismatches between the
 // reported storage condition and what the food category requires.
-// These are NOT certified food-safety standards.  They are advisory prompts
-// for human review.  A mismatch only raises the suitability floor to
-// 'Requires Review'; it never directly produces 'Not Recommended' unless
-// the age/time rules already do so independently.
+// These are NOT certified food-safety standards. They are advisory prompts
+// for human review.
 
 interface StorageEvaluation {
   /** Null means no obvious mismatch detected. */
@@ -323,61 +394,64 @@ interface StorageEvaluation {
 }
 
 /**
- * Check whether the reported storage condition is obviously incompatible
- * with the food category's expected handling.
- *
- * Mismatch patterns (conservative — only clear conflicts):
- *   Prepared Meals  + Room Temperature → Requires Review
- *   Frozen          + Room Temperature → Requires Review
- *   Dairy & Eggs    + Room Temperature → Requires Review
+ * Check whether the reported storage condition is compatible with category needs.
+ * For perishable categories stored at room temperature, duration matters:
+ * short periods require review; extended periods in the danger zone mandate Not Recommended.
  */
 function evaluateStorageCondition(
   category: FoodCategory,
   storageCondition: string,
+  foodAgeHours: number = 0,
 ): StorageEvaluation {
   const condition = storageCondition.trim().toLowerCase()
 
-  // Only flag when the reported condition is clearly 'room temperature'
-  if (condition !== 'room temperature') {
-    return { suitabilityCap: null, storageNote: null }
+  if (condition === 'room temperature') {
+    switch (category) {
+      case 'Prepared Meals':
+        if (foodAgeHours > 4) {
+          return {
+            suitabilityCap: 'Not Recommended',
+            storageNote:
+              'Storage condition alert (advisory): Prepared meal held at room temperature for over 4 hours has exceeded the food safety danger zone (5 °C–60 °C). Redistribution is not recommended due to pathogen growth risk.',
+          }
+        }
+        return {
+          suitabilityCap: 'Requires Review',
+          storageNote:
+            'Storage condition check (advisory): Prepared meals stored at room temperature are within the temperature danger zone (5 °C–60 °C). ' +
+            'A coordinator must verify actual storage history and immediate consumption/reheating feasibility before redistribution.',
+        }
+
+      case 'Frozen':
+        return {
+          suitabilityCap: 'Requires Review',
+          storageNote:
+            'Storage condition check (advisory): Frozen food is expected to remain at −18 °C or below. ' +
+            'Reporting room temperature storage for frozen food suggests the item may have thawed — ' +
+            'a coordinator must verify the current state before redistribution.',
+        }
+
+      case 'Dairy & Eggs':
+        if (foodAgeHours > 4) {
+          return {
+            suitabilityCap: 'Not Recommended',
+            storageNote:
+              'Storage condition alert (advisory): Dairy products held at room temperature for over 4 hours present severe bacterial risk and are not recommended for redistribution.',
+          }
+        }
+        return {
+          suitabilityCap: 'Requires Review',
+          storageNote:
+            'Storage condition check (advisory): Dairy and egg products are expected to be kept refrigerated. ' +
+            'Reporting room temperature storage is a potential mismatch — a coordinator should verify actual storage and check use-by dates.',
+        }
+
+      default:
+        return { suitabilityCap: null, storageNote: null }
+    }
   }
 
-  switch (category) {
-    case 'Prepared Meals':
-      return {
-        suitabilityCap: 'Requires Review',
-        storageNote:
-          'Storage condition check (advisory): Prepared meals are typically expected to be kept refrigerated or served hot. ' +
-          'Reporting room temperature storage for prepared meals is a potential mismatch — ' +
-          'a coordinator should verify actual storage conditions before redistribution. ' +
-          'This note is informational and does not constitute a certified food-safety determination.',
-      }
-
-    case 'Frozen':
-      return {
-        suitabilityCap: 'Requires Review',
-        storageNote:
-          'Storage condition check (advisory): Frozen food is expected to remain at −18 °C or below. ' +
-          'Reporting room temperature storage for frozen food suggests the item may have thawed — ' +
-          'a coordinator must verify the current state before redistribution. ' +
-          'This note is informational and does not constitute a certified food-safety determination.',
-      }
-
-    case 'Dairy & Eggs':
-      return {
-        suitabilityCap: 'Requires Review',
-        storageNote:
-          'Storage condition check (advisory): Dairy and egg products are typically expected to be kept refrigerated. ' +
-          'Reporting room temperature storage for dairy/egg items is a potential mismatch — ' +
-          'a coordinator should verify actual storage and check use-by dates before redistribution. ' +
-          'This note is informational and does not constitute a certified food-safety determination.',
-      }
-
-    default:
-      // All other categories (Bakery & Bread, Canned & Packaged, Fresh Produce,
-      // Beverages, Other) may legitimately be stored at room temperature.
-      return { suitabilityCap: null, storageNote: null }
-  }
+  return { suitabilityCap: null, storageNote: null }
 }
 
 // ─── Internal helpers ─────────────────────────────────────────────────────────
@@ -409,8 +483,14 @@ function resolveCategory(input: string): FoodCategory {
   return 'Other'
 }
 
-function computeConfidence(input: AnalysisInput, agePenalty: number): number {
-  // Base score: field completeness
+function computeConfidence(
+  input: AnalysisInput,
+  category: FoodCategory,
+  ageEval: AgeEvaluation,
+  remainingHours: number,
+  storageEval: StorageEvaluation,
+  hasAvailabilityUntil: boolean,
+): number {
   const fields: string[] = [
     input.foodName,
     input.category,
@@ -422,12 +502,40 @@ function computeConfidence(input: AnalysisInput, agePenalty: number): number {
     input.storageCondition,
     input.location,
   ]
-  const filled = fields.filter((f) => f.trim().length > 0).length
-  const base = filled / fields.length
-  // Bonus for additionalInfo providing allergen/dietary context
-  const bonus = input.additionalInfo.trim().length > 10 ? 0.05 : 0
-  // Age penalty — stale/spoiled food reduces confidence regardless of completeness
-  return Math.max(0, Math.min(1, parseFloat((base + bonus - agePenalty).toFixed(2))))
+  const filled = fields.filter((f) => f && f.trim().length > 0).length
+  // Base confidence from field completeness (0.70 to 0.88)
+  let score = 0.70 + (filled / fields.length) * 0.18
+
+  // Bonus for clear allergen/handling context
+  const hasNotes = input.additionalInfo && input.additionalInfo.trim().length > 10
+  if (hasNotes) {
+    score += 0.04
+  } else if (category === 'Prepared Meals') {
+    // Missing ingredient context on prepared meals carries minor certainty deduction
+    score -= 0.04
+  }
+
+  // Deductions for safety uncertainty in the classification:
+  if (ageEval.ageBand === 'caution') {
+    score -= 0.05
+  } else if (ageEval.ageBand === 'stale') {
+    // Aging food near limits has inherently higher microbiological variance
+    score -= 0.12
+  } else if (ageEval.ageBand === 'spoiled') {
+    score -= 0.04
+  }
+
+  // Elapsed availability window adds coordinator uncertainty
+  if (hasAvailabilityUntil && remainingHours <= 0) {
+    score -= 0.08
+  }
+
+  // Storage mismatch adds uncertainty
+  if (storageEval.suitabilityCap !== null) {
+    score -= 0.08
+  }
+
+  return parseFloat(Math.max(0.40, Math.min(0.92, score)).toFixed(2))
 }
 
 // ─── Per-category rules ────────────────────────────────────────────────────────
@@ -545,12 +653,19 @@ function applySuitabilityCap(
 function deriveSuitabilityFromTime(
   category: FoodCategory,
   remainingHours: number,
-  confidence: number,
+  hasAvailabilityUntil: boolean,
 ): DonationSuitability {
   const profile = CATEGORY_PROFILES[category]
-  if (remainingHours <= 0) return 'Not Recommended'
-  if (remainingHours < profile.maxSafeHours * 0.25 || confidence < 0.5) return 'Requires Review'
-  if (remainingHours < profile.maxSafeHours * 0.6 || confidence < 0.75) return 'Suitable with Conditions'
+
+  // If the stated availability deadline has elapsed:
+  // This is a coordination / availability concern requiring coordinator verification.
+  // It does NOT automatically mean the food is biologically toxic, so cap at 'Requires Review'.
+  if (hasAvailabilityUntil && remainingHours <= 0) {
+    return 'Requires Review'
+  }
+
+  if (remainingHours < profile.maxSafeHours * 0.25) return 'Requires Review'
+  if (remainingHours < profile.maxSafeHours * 0.6) return 'Suitable with Conditions'
   return 'Suitable'
 }
 
@@ -559,9 +674,11 @@ function derivePriority(
   remainingHours: number,
   availabilityWindowHours: number,
   ageEval: AgeEvaluation,
+  suitability: DonationSuitability,
 ): Priority {
-  // Age-driven override: spoiled/stale food is always Low priority
+  if (suitability === 'Not Recommended') return 'Low'
   if (ageEval.agePriority !== null) return ageEval.agePriority
+  if (remainingHours <= 0) return 'Low'
 
   const profile = CATEGORY_PROFILES[category]
   if (remainingHours <= profile.maxSafeHours * 0.5 && remainingHours < 12) return 'High'
@@ -576,16 +693,25 @@ function deriveShelfLife(
   category: FoodCategory,
   remainingHours: number,
   ageEval: AgeEvaluation,
+  hasAvailabilityUntil: boolean,
 ): string {
-  // If age band is spoiled, the shelf life message must reflect food age, not expiry date
   if (ageEval.ageBand === 'spoiled') {
-    return `Expired / unsuitable based on reported age (${ageEval.ageDescription})`
+    return `Exceeds advisory redistribution age for ${category} (${ageEval.ageDescription}) — not recommended`
   }
+
+  const isWindowElapsed = hasAvailabilityUntil && remainingHours <= 0
+
   if (ageEval.ageBand === 'stale') {
-    return `Stale — food is ${ageEval.ageDescription}, which exceeds the advisory threshold for ${category}`
+    if (isWindowElapsed) {
+      return `Stated availability window elapsed; ${category.toLowerCase()} is ${ageEval.ageDescription} — coordinator review required`
+    }
+    return `Approaching ${category.toLowerCase()} shelf-life limit — food is ${ageEval.ageDescription}; physical assessment required`
   }
-  // For fresh/caution food, use remaining-time logic
-  if (remainingHours <= 0) return 'Expired or unavailable'
+
+  if (isWindowElapsed) {
+    return `Stated availability deadline elapsed — verify with donor if donation remains available`
+  }
+
   if (remainingHours < 2) return 'Less than 2 hours remaining — immediate action required'
   if (remainingHours < 6) return `Approximately ${Math.round(remainingHours)} hours remaining — same-day redistribution required`
   if (remainingHours < 24) return `Approximately ${Math.round(remainingHours)} hours remaining — redistribute today`
@@ -622,6 +748,8 @@ function buildRecommendation(
   category: FoodCategory,
   remainingHours: number,
   ageEval: AgeEvaluation,
+  hasAvailabilityUntil: boolean,
+  foodName: string,
 ): string {
   if (ageEval.ageBand === 'spoiled') {
     return (
@@ -630,21 +758,32 @@ function buildRecommendation(
       `Human verification is required before any action.`
     )
   }
+
   if (suitability === 'Not Recommended') {
-    return 'This donation is not recommended for redistribution. A coordinator should review before any action.'
+    return 'This donation is not recommended for redistribution based on submitted safety parameters. A coordinator should review before taking any action.'
   }
-  if (ageEval.ageBand === 'stale' || suitability === 'Requires Review') {
-    return (
-      `This ${category.toLowerCase()} donation requires coordinator review before redistribution can proceed. ` +
-      `The food is ${ageEval.ageDescription} — age assessment is required.`
-    )
+
+  const isWindowElapsed = hasAvailabilityUntil && remainingHours <= 0
+  const nameLabel = foodName ? foodName.trim() : category.toLowerCase()
+
+  if (suitability === 'Requires Review') {
+    if (isWindowElapsed && ageEval.ageBand === 'stale') {
+      return `This ${nameLabel} donation requires coordinator review. The stated availability deadline has elapsed and the food is ${ageEval.ageDescription}. Confirm continuous storage integrity and donor status before proceeding.`
+    }
+    if (isWindowElapsed) {
+      return `The stated availability deadline for this ${nameLabel} donation has elapsed. Coordinator must verify with the donor whether the food is still available and properly stored.`
+    }
+    return `This ${nameLabel} donation requires coordinator review before redistribution can proceed. The food is ${ageEval.ageDescription} — physical inspection is required.`
   }
+
   if (priority === 'High') {
     return `Prioritise immediate redistribution of this ${category.toLowerCase()} donation — approximately ${Math.round(remainingHours)} hour${Math.round(remainingHours) !== 1 ? 's' : ''} remaining.`
   }
+
   if (suitability === 'Suitable with Conditions') {
-    return `This donation is suitable with conditions. Confirm storage and allergen requirements with the recipient before redistribution.`
+    return `This donation is suitable with conditions. Confirm storage requirements and allergen information with the recipient before redistribution.`
   }
+
   return `This donation is suitable for redistribution. Coordinate collection within the availability window.`
 }
 
@@ -653,6 +792,7 @@ function buildSafetyConsiderations(
   category: FoodCategory,
   remainingHours: number,
   ageEval: AgeEvaluation,
+  hasAvailabilityUntil: boolean,
 ): string[] {
   const considerations: string[] = []
 
@@ -672,12 +812,20 @@ function buildSafetyConsiderations(
   if (!input.availabilityUntil) {
     considerations.push('Availability end time was not provided — expiry cannot be determined.')
   }
-  if (remainingHours <= 0 && input.availabilityUntil) {
-    considerations.push('The stated availability window has elapsed — do not redistribute without further assessment.')
+  if (hasAvailabilityUntil && remainingHours <= 0) {
+    considerations.push('The stated availability window has elapsed — coordinator must verify with the donor whether the food is still in cold storage and eligible for collection.')
   }
-  if (category === 'Prepared Meals' && !input.additionalInfo) {
-    considerations.push('No allergen or ingredient information was provided for a prepared meal — this must be obtained before redistribution.')
+
+  if (category === 'Prepared Meals') {
+    const foodLower = input.foodName.toLowerCase()
+    if (foodLower.includes('rice')) {
+      considerations.push('Cooked rice carries Bacillus cereus risk if temperature abused — confirm strict continuous refrigeration (<5 °C) and ensure food will be thoroughly reheated to ≥74 °C before serving.')
+    }
+    if (!input.additionalInfo || input.additionalInfo.trim().length === 0) {
+      considerations.push('No allergen or ingredient declaration was provided — coordinator must verify ingredients with the donor before distributing to recipients with food allergies.')
+    }
   }
+
   if (category === 'Dairy & Eggs') {
     considerations.push('Dairy and egg products are high-risk categories — cold chain must be maintained throughout.')
   }
@@ -697,37 +845,53 @@ function buildReasoning(
   remainingHours: number,
   confidence: number,
   ageEval: AgeEvaluation,
+  hasAvailabilityUntil: boolean,
 ): string {
   const qty = `${input.quantity} ${input.unit}`.trim()
   const servings = input.estimatedServings ? ` (approximately ${input.estimatedServings} servings)` : ''
+  const isWindowElapsed = hasAvailabilityUntil && remainingHours <= 0
 
   const windowDesc = availabilityWindowHours > 0
     ? `an availability window of ${Math.round(availabilityWindowHours)} hour${Math.round(availabilityWindowHours) !== 1 ? 's' : ''}`
     : 'an unspecified availability window'
 
-  const remainDesc = remainingHours > 0
-    ? `approximately ${Math.round(remainingHours)} hour${Math.round(remainingHours) !== 1 ? 's' : ''} remaining before the stated expiry`
-    : 'the stated availability window has elapsed or could not be determined'
+  let remainDesc: string
+  if (isWindowElapsed) {
+    remainDesc = 'the stated availability deadline has elapsed'
+  } else if (remainingHours > 0) {
+    remainDesc = `approximately ${Math.round(remainingHours)} hour${Math.round(remainingHours) !== 1 ? 's' : ''} remaining before the stated expiry`
+  } else {
+    remainDesc = 'the availability window could not be determined'
+  }
 
+  const confidencePct = Math.round(confidence * 100)
   const confidenceDesc = confidence >= 0.85
-    ? 'High confidence based on complete submission data.'
+    ? `High confidence (${confidencePct}%) based on complete and consistent submission data.`
     : confidence >= 0.65
-    ? 'Moderate confidence — most fields were provided.'
-    : 'Lower confidence — some fields were incomplete or food age reduces confidence; coordinator should verify details.'
+    ? `Moderate confidence (${confidencePct}%) reflecting advisory uncertainty due to elapsed time or verification requirements.`
+    : `Lower confidence (${confidencePct}%) — significant data gaps or timing uncertainties require on-site coordinator verification.`
 
-  // Age is always mentioned explicitly in reasoning
-  const ageNote = ageEval.ageBand === 'spoiled' || ageEval.ageBand === 'stale'
-    ? `The reported preparation date indicates that this food has been stored for an extended period (${ageEval.ageDescription}), which is a primary factor in this assessment.`
-    : `The food is ${ageEval.ageDescription}, which is within the expected range for ${category}.`
+  let ageNote: string
+  if (ageEval.ageBand === 'spoiled') {
+    ageNote = `The reported preparation date indicates that this food has been stored for an extended period (${ageEval.ageDescription}), which is a primary factor in this assessment.`
+  } else if (ageEval.ageBand === 'stale') {
+    ageNote = `The food is ${ageEval.ageDescription}, which reaches the upper advisory limit for ${category} and requires physical condition verification.`
+  } else {
+    ageNote = `The food is ${ageEval.ageDescription}, which is within the expected range for ${category}.`
+  }
+
+  const allergenNote = (category === 'Prepared Meals' && (!input.additionalInfo || input.additionalInfo.trim().length === 0))
+    ? ' Note: Ingredient and allergen information was not provided in the submission and must be verified prior to service.'
+    : ''
 
   return (
-    `${input.foodName || 'This donation'} is classified as ${category} with ${windowDesc} and ${remainDesc}. ` +
+    `${input.foodName || 'This donation'} is classified as ${category} with ${windowDesc} (${remainDesc}). ` +
     `The submitted quantity is ${qty}${servings}. ` +
     `${ageNote} ` +
-    `Based on the food type, age, time window, and storage condition (${input.storageCondition || 'unspecified'}), ` +
+    `Based on the food category, age, storage condition (${input.storageCondition || 'unspecified'}), and timeline, ` +
     `the assessed priority is ${priority} and donation suitability is "${suitability}". ` +
-    `${confidenceDesc} ` +
-    `This analysis is advisory — all redistribution decisions must be confirmed by a responsible coordinator.`
+    `${confidenceDesc}${allergenNote} ` +
+    `This analysis is advisory decision-support — all redistribution decisions must be confirmed by a responsible coordinator.`
   )
 }
 
@@ -837,7 +1001,10 @@ function buildDateErrorResult(
  *   runAnalysis(input: AnalysisInput): Promise<FoodAnalysisResult>
  * ────────────────────────────────────────────────────────────────────────────
  */
-export async function runAnalysis(input: AnalysisInput): Promise<FoodAnalysisResult> {
+export async function runAnalysis(
+  input: AnalysisInput,
+  nowTimeOverride?: number,
+): Promise<FoodAnalysisResult> {
   // ── Input validation ───────────────────────────────────────────────────────
   if (!input.foodName || input.foodName.trim().length === 0) {
     throw new AnalysisInputError('Food name is required for analysis.')
@@ -853,7 +1020,7 @@ export async function runAnalysis(input: AnalysisInput): Promise<FoodAnalysisRes
   const category = resolveCategory(input.category)
 
   // ── Date validation — MUST happen before any age/time calculations ─────────
-  const dateResult = validateDates(input.preparationDate, input.availabilityUntil)
+  const dateResult = validateDates(input.preparationDate, input.availabilityUntil, nowTimeOverride)
   if (!dateResult.valid) {
     return buildDateErrorResult(input, category, dateResult.reason)
   }
@@ -861,34 +1028,60 @@ export async function runAnalysis(input: AnalysisInput): Promise<FoodAnalysisRes
   // ── Compute time values from validated timestamps ─────────────────────────
   const { prepTime, untilTime, nowTime } = dateResult
   const foodAgeHours = computeFoodAgeHours(prepTime, nowTime)
+  const hasAvailabilityUntil = untilTime > 0
   const remainingHours = computeRemainingHoursFromTimes(untilTime, nowTime)
   const availabilityWindowHours = computeWindowHoursFromTimes(prepTime, untilTime)
 
-  // ── Food age evaluation — primary safety signal ───────────────────────────
-  // This runs BEFORE confidence and suitability so its outputs can influence them.
-  const ageEval = evaluateFoodAge(category, foodAgeHours)
-
   // ── Storage condition check — secondary safety signal ────────────────────
-  // Detects obvious mismatches between reported storage and category expectations.
-  const storageEval = evaluateStorageCondition(category, input.storageCondition)
+  const storageEval = evaluateStorageCondition(category, input.storageCondition, foodAgeHours)
 
-  // ── Confidence (field completeness minus age penalty) ─────────────────────
-  const confidence = computeConfidence(input, ageEval.confidencePenalty)
+  // ── Food age evaluation — storage-aware primary safety signal ─────────────
+  const ageEval = evaluateFoodAge(category, foodAgeHours, input.storageCondition)
 
-  // ── Suitability: derive from time, then cap by age, then cap by storage ───
-  const timeSuitability = deriveSuitabilityFromTime(category, remainingHours, confidence)
+  // ── Suitability: derive from time window, then cap by age, then cap by storage ─
+  const timeSuitability = deriveSuitabilityFromTime(category, remainingHours, hasAvailabilityUntil)
   const afterAgeCap = applySuitabilityCap(timeSuitability, ageEval.suitabilityCap)
-  const suitability = storageEval.suitabilityCap !== null
+  let suitability = storageEval.suitabilityCap !== null
     ? applySuitabilityCap(afterAgeCap, storageEval.suitabilityCap)
     : afterAgeCap
 
+  // ── Allergen / ingredient declaration check for Prepared Meals ────────────
+  // Missing allergen declaration does not make food inherently unsafe,
+  // but requires verification conditions before distribution.
+  const hasAllergenNotes = Boolean(input.additionalInfo && input.additionalInfo.trim().length > 0)
+  if (category === 'Prepared Meals' && !hasAllergenNotes && suitability === 'Suitable') {
+    suitability = 'Suitable with Conditions'
+  }
+
+  // ── Confidence ────────────────────────────────────────────────────────────
+  const confidence = computeConfidence(
+    input,
+    category,
+    ageEval,
+    remainingHours,
+    storageEval,
+    hasAvailabilityUntil,
+  )
+
   // ── Priority ──────────────────────────────────────────────────────────────
-  const priority = derivePriority(category, remainingHours, availabilityWindowHours, ageEval)
+  const priority = derivePriority(
+    category,
+    remainingHours,
+    availabilityWindowHours,
+    ageEval,
+    suitability,
+  )
 
   // ── Build output ──────────────────────────────────────────────────────────
   const profile = CATEGORY_PROFILES[category]
   const baseGuidance = addContextualGuidance(profile.baseGuidance, input)
-  const baseConsiderations = buildSafetyConsiderations(input, category, remainingHours, ageEval)
+  const baseConsiderations = buildSafetyConsiderations(
+    input,
+    category,
+    remainingHours,
+    ageEval,
+    hasAvailabilityUntil,
+  )
   // Append storage mismatch note if present
   const safetyConsiderations = storageEval.storageNote !== null
     ? [...baseConsiderations, storageEval.storageNote]
@@ -907,7 +1100,7 @@ export async function runAnalysis(input: AnalysisInput): Promise<FoodAnalysisRes
     quantity,
 
     // Time & storage
-    estimatedShelfLife: deriveShelfLife(category, remainingHours, ageEval),
+    estimatedShelfLife: deriveShelfLife(category, remainingHours, ageEval, hasAvailabilityUntil),
     storageRecommendation: profile.storageRecommendation,
     availabilityWindowHours: Math.round(availabilityWindowHours),
 
@@ -920,10 +1113,25 @@ export async function runAnalysis(input: AnalysisInput): Promise<FoodAnalysisRes
     confidence,
 
     // Recommendation & reasoning
-    recommendation: buildRecommendation(suitability, priority, category, remainingHours, ageEval),
+    recommendation: buildRecommendation(
+      suitability,
+      priority,
+      category,
+      remainingHours,
+      ageEval,
+      hasAvailabilityUntil,
+      input.foodName,
+    ),
     reasoning: buildReasoning(
-      input, category, priority, suitability,
-      availabilityWindowHours, remainingHours, confidence, ageEval,
+      input,
+      category,
+      priority,
+      suitability,
+      availabilityWindowHours,
+      remainingHours,
+      confidence,
+      ageEval,
+      hasAvailabilityUntil,
     ),
     relevantGuidance: baseGuidance,
 
@@ -931,7 +1139,7 @@ export async function runAnalysis(input: AnalysisInput): Promise<FoodAnalysisRes
     requiresHumanVerification: true,
 
     // Metadata
-    analysedAt: new Date().toISOString(),
+    analysedAt: new Date(nowTime).toISOString(),
     estimatedServings,
   }
 }

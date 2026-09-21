@@ -86,6 +86,7 @@ function mapToAnalysisInput(donation: DonationFormData): AnalysisInput {
  */
 export async function analyseFood(
   donation: DonationFormData,
+  nowTimeOverride?: number,
 ): Promise<FoodAnalysisResult> {
   // ── Pre-flight validation ────────────────────────────────────────────────
   if (!donation.foodName || donation.foodName.trim().length === 0) {
@@ -98,7 +99,7 @@ export async function analyseFood(
   // ── Run analysis ─────────────────────────────────────────────────────────
   try {
     const input = mapToAnalysisInput(donation)
-    const result = await runAnalysis(input)
+    const result = await runAnalysis(input, nowTimeOverride)
     return result
   } catch (err) {
     // Re-surface validation errors from the analyser unchanged

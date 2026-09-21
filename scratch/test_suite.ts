@@ -98,10 +98,10 @@ async function runTests() {
     console.log('PASS: Room-temp meal Requires Review')
   }
 
-  // 1E. Prepared meal older than 24 hours (spoiled threshold is 24h)
+  // 1E. Prepared meal 30 hours old (refrigerated caution band: 24h-48h -> Suitable with Conditions)
   const thirtyHoursAgo = new Date(now.getTime() - 30 * 3600 * 1000).toISOString()
-  const oldMealRes = await runAnalysis({
-    foodName: 'Old Cooked Pasta',
+  const cautionMealRes = await runAnalysis({
+    foodName: 'Refrigerated Cooked Pasta',
     category: 'Prepared Meals',
     quantity: '10',
     unit: 'portions',
@@ -112,12 +112,58 @@ async function runTests() {
     location: 'Central District',
     additionalInfo: '',
   })
-  console.log('30-hour old meal suitability:', oldMealRes.donationSuitability)
-  if (oldMealRes.donationSuitability !== 'Not Recommended') {
-    console.error('FAIL: Old meal should be Not Recommended, got:', oldMealRes.donationSuitability)
+  console.log('30-hour refrigerated meal suitability:', cautionMealRes.donationSuitability)
+  if (cautionMealRes.donationSuitability !== 'Suitable with Conditions') {
+    console.error('FAIL: 30-hour refrigerated meal should be Suitable with Conditions, got:', cautionMealRes.donationSuitability)
     process.exit(1)
   } else {
-    console.log('PASS: Old meal is Not Recommended')
+    console.log('PASS: 30-hour refrigerated meal is Suitable with Conditions')
+  }
+
+  // 1E2. Prepared meal 100 hours old (exceeds 72h max refrigerated limit -> Not Recommended)
+  const hundredHoursAgo = new Date(now.getTime() - 100 * 3600 * 1000).toISOString()
+  const oldMealRes = await runAnalysis({
+    foodName: 'Old Cooked Pasta',
+    category: 'Prepared Meals',
+    quantity: '10',
+    unit: 'portions',
+    estimatedServings: '10',
+    preparationDate: hundredHoursAgo,
+    availabilityUntil: inTwentyHours,
+    storageCondition: 'Refrigerated',
+    location: 'Central District',
+    additionalInfo: '',
+  })
+  console.log('100-hour old meal suitability:', oldMealRes.donationSuitability)
+  if (oldMealRes.donationSuitability !== 'Not Recommended') {
+    console.error('FAIL: 100-hour old meal should be Not Recommended, got:', oldMealRes.donationSuitability)
+    process.exit(1)
+  } else {
+    console.log('PASS: 100-hour old meal is Not Recommended')
+  }
+
+  // 1G. Rice test case: 2.5 days old, refrigerated, elapsed window -> Requires Review
+  const twoAndHalfDaysAgoHours = 60.5
+  const prepTimeRice = new Date(now.getTime() - twoAndHalfDaysAgoHours * 3600 * 1000).toISOString()
+  const elapsedWindowUntil = new Date(now.getTime() - 48 * 3600 * 1000).toISOString() // window elapsed 48h ago
+  const riceRes = await runAnalysis({
+    foodName: 'Rice',
+    category: 'Prepared Meals',
+    quantity: '25',
+    unit: 'portions',
+    estimatedServings: '25',
+    preparationDate: prepTimeRice,
+    availabilityUntil: elapsedWindowUntil,
+    storageCondition: 'Refrigerated',
+    location: 'Central District',
+    additionalInfo: '',
+  })
+  console.log('Rice (2.5d old, refrig, elapsed window) suitability:', riceRes.donationSuitability, '| Confidence:', riceRes.confidence)
+  if (riceRes.donationSuitability !== 'Requires Review') {
+    console.error('FAIL: Rice test case should be Requires Review, got:', riceRes.donationSuitability)
+    process.exit(1)
+  } else {
+    console.log('PASS: Rice test case is Requires Review')
   }
 
   // 1F. Future preparation date
