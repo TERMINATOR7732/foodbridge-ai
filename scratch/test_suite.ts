@@ -76,23 +76,23 @@ async function runTests() {
     console.log('PASS: Caution bread is Suitable with Conditions')
   }
 
-  // 1D. Prepared meal stored at Room Temperature (mismatch check)
-  const oneHourAgo = new Date(now.getTime() - 1 * 3600 * 1000).toISOString()
+  // 1D. Prepared meal stored at Room Temperature with moderate elapsed time (4h -> Requires Review)
+  const fourHoursAgo = new Date(now.getTime() - 4 * 3600 * 1000).toISOString()
   const roomTempMealRes = await runAnalysis({
     foodName: 'Chicken Curry',
     category: 'Prepared Meals',
     quantity: '10',
     unit: 'portions',
     estimatedServings: '10',
-    preparationDate: oneHourAgo,
+    preparationDate: fourHoursAgo,
     availabilityUntil: inTwentyHours,
     storageCondition: 'Room Temperature',
     location: 'Central District',
     additionalInfo: '',
   })
-  console.log('Room-temp prepared meal suitability:', roomTempMealRes.donationSuitability)
+  console.log('Room-temp prepared meal (4h) suitability:', roomTempMealRes.donationSuitability)
   if (roomTempMealRes.donationSuitability !== 'Requires Review') {
-    console.error('FAIL: Room-temp meal should require review, got:', roomTempMealRes.donationSuitability)
+    console.error('FAIL: Room-temp meal (4h) should require review, got:', roomTempMealRes.donationSuitability)
     process.exit(1)
   } else {
     console.log('PASS: Room-temp meal Requires Review')

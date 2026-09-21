@@ -64,6 +64,7 @@ export type RecommendedStorage =
   | 'Room Temperature'
   | 'Keep Cool (below 15 °C)'
   | 'Consume Immediately'
+  | string
 
 /**
  * Full structured result returned by the AI food analyser.
@@ -87,6 +88,8 @@ export interface FoodAnalysisResult {
   storageRecommendation: RecommendedStorage
   /** Availability window in hours from preparation to expiry. */
   availabilityWindowHours: number
+  /** Status of the availability window (Active or Expired). */
+  availabilityStatus?: 'Active' | 'Expired'
 
   // ── Safety & suitability ─────────────────────────────────────────────────
   /**
