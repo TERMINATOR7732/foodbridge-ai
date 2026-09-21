@@ -90,6 +90,16 @@ export interface FoodAnalysisResult {
   availabilityWindowHours: number
   /** Status of the availability window (Active or Expired). */
   availabilityStatus?: 'Active' | 'Expired'
+  /** Human-readable display for availability window (e.g. "13h total — Active"). */
+  availabilityWindowDisplay?: string
+  /** Food age in hours from preparation to assessment time. */
+  foodAgeHours?: number
+  /** Human-readable food age at assessment (e.g. "4 hours" or "2 days and 14 hours"). */
+  foodAgeAtAssessment?: string
+  /** Hours remaining in the availability window (0 if expired). */
+  remainingAvailabilityHours?: number
+  /** Hours elapsed since availability deadline expired (0 if still active). */
+  elapsedSinceExpiryHours?: number
 
   // ── Safety & suitability ─────────────────────────────────────────────────
   /**

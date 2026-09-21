@@ -158,6 +158,26 @@ function computeWindowHoursFromTimes(prepTime: number, untilTime: number): numbe
   return Math.max(0, (untilTime - prepTime) / (1000 * 60 * 60))
 }
 
+/**
+ * Formats an elapsed duration in hours into a clear, human-readable string.
+ * Examples: "less than 1 hour", "4 hours", "13 hours", "2 days and 14 hours".
+ */
+export function formatDuration(hours: number): string {
+  if (hours < 1) {
+    return 'less than 1 hour'
+  }
+  const rounded = Math.round(hours)
+  if (rounded < 24) {
+    return `${rounded} hour${rounded !== 1 ? 's' : ''}`
+  }
+  const days = Math.floor(hours / 24)
+  const remainHours = Math.round(hours % 24)
+  if (remainHours === 0) {
+    return `${days} day${days !== 1 ? 's' : ''}`
+  }
+  return `${days} day${days !== 1 ? 's' : ''} and ${remainHours} hour${remainHours !== 1 ? 's' : ''}`
+}
+
 // ─── Category-aware age thresholds ────────────────────────────────────────────
 //
 // These are CONSERVATIVE DEMO thresholds used for advisory purposes only.
@@ -309,23 +329,12 @@ function evaluateFoodAge(
   storageCondition: string = '',
 ): AgeEvaluation {
   const thresholds = getCategoryThresholds(category, storageCondition)
-  const ageHoursRounded = Math.round(foodAgeHours)
 
   // Format age for human-readable reasoning
-  let ageDescription: string
-  if (foodAgeHours < 1) {
-    ageDescription = 'less than 1 hour old'
-  } else if (foodAgeHours < 24) {
-    ageDescription = `approximately ${ageHoursRounded} hour${ageHoursRounded !== 1 ? 's' : ''} old`
-  } else {
-    const days = Math.floor(foodAgeHours / 24)
-    const remainHours = ageHoursRounded % 24
-    if (remainHours === 0) {
-      ageDescription = `${days} day${days !== 1 ? 's' : ''} old`
-    } else {
-      ageDescription = `${days} day${days !== 1 ? 's' : ''} and ${remainHours} hour${remainHours !== 1 ? 's' : ''} old`
-    }
-  }
+  const durationStr = formatDuration(foodAgeHours)
+  const ageDescription = foodAgeHours < 24 && foodAgeHours >= 1
+    ? `approximately ${durationStr} old at assessment`
+    : `${durationStr} old at assessment`
 
   if (foodAgeHours <= thresholds.freshHours) {
     return {
@@ -767,6 +776,8 @@ function deriveShelfLife(
   ageEval: AgeEvaluation,
   hasAvailabilityUntil: boolean,
   storageCondition: string = '',
+  availabilityWindowHours: number = 0,
+  elapsedSinceExpiryHours: number = 0,
 ): string {
   const normStorage = (storageCondition || '').trim().toLowerCase()
   const isWindowElapsed = hasAvailabilityUntil && remainingHours <= 0
@@ -780,7 +791,8 @@ function deriveShelfLife(
 
   if (ageEval.ageBand === 'stale') {
     if (isWindowElapsed) {
-      return `Stated availability window expired; ${category.toLowerCase()} is ${ageEval.ageDescription} — coordinator review required`
+      const windowStr = availabilityWindowHours > 0 ? `Original ${Math.round(availabilityWindowHours)}h availability window expired; ` : 'Stated availability window expired; '
+      return `${windowStr}${category.toLowerCase()} is ${ageEval.ageDescription} — coordinator review required`
     }
     if (category === 'Prepared Meals' && normStorage === 'room temperature') {
       return `Stored at room temperature for ${ageEval.ageDescription} — elevated risk; coordinator review required`
@@ -789,7 +801,9 @@ function deriveShelfLife(
   }
 
   if (isWindowElapsed) {
-    return `Stated availability window expired — coordinator must verify with donor if food remains available`
+    const elapsedDesc = elapsedSinceExpiryHours > 0 ? ` (${formatDuration(elapsedSinceExpiryHours)} past deadline)` : ''
+    const windowStr = availabilityWindowHours > 0 ? `Stated ${Math.round(availabilityWindowHours)}h availability window expired` : 'Stated availability window expired'
+    return `${windowStr}${elapsedDesc} — coordinator must verify with donor if food remains available`
   }
 
   if (remainingHours < 2) return 'Less than 2 hours remaining — immediate action required'
@@ -868,6 +882,8 @@ function buildRecommendation(
   hasAvailabilityUntil: boolean,
   foodName: string,
   storageCondition: string = '',
+  availabilityWindowHours: number = 0,
+  elapsedSinceExpiryHours: number = 0,
 ): string {
   const normStorage = (storageCondition || '').trim().toLowerCase()
   const isWindowElapsed = hasAvailabilityUntil && remainingHours <= 0
@@ -890,10 +906,13 @@ function buildRecommendation(
 
   if (suitability === 'Requires Review') {
     if (isWindowElapsed && ageEval.ageBand === 'stale') {
-      return `This ${nameLabel} donation requires coordinator review. The stated availability window has expired and the food is ${ageEval.ageDescription}. Confirm continuous storage integrity and donor status before proceeding.`
+      const windowStr = availabilityWindowHours > 0 ? `The original ${Math.round(availabilityWindowHours)}h availability window has expired` : 'The stated availability window has expired'
+      return `This ${nameLabel} donation requires coordinator review. ${windowStr} and the food is ${ageEval.ageDescription}. Confirm continuous storage integrity and donor status before proceeding.`
     }
     if (isWindowElapsed) {
-      return `The stated availability window for this ${nameLabel} donation has expired. Coordinator must verify with the donor whether the food is still available and properly stored.`
+      const elapsedDesc = elapsedSinceExpiryHours > 0 ? ` (${formatDuration(elapsedSinceExpiryHours)} ago)` : ''
+      const windowStr = availabilityWindowHours > 0 ? `The original ${Math.round(availabilityWindowHours)}h availability window` : 'The stated availability window'
+      return `${windowStr} for this ${nameLabel} donation has expired${elapsedDesc}. Coordinator must verify with the donor whether the food is still available and properly stored.`
     }
     if (category === 'Prepared Meals' && normStorage === 'room temperature') {
       return `This ${nameLabel} donation requires coordinator review before redistribution can proceed. The food was held at room temperature (${ageEval.ageDescription}) — verify handling history, continuous hot-holding or cooling, and sensory condition.`
@@ -922,6 +941,8 @@ function buildSafetyConsiderations(
   ageEval: AgeEvaluation,
   hasAvailabilityUntil: boolean,
   foodAgeHours: number,
+  availabilityWindowHours: number = 0,
+  elapsedSinceExpiryHours: number = 0,
 ): string[] {
   const considerations: string[] = []
 
@@ -942,8 +963,10 @@ function buildSafetyConsiderations(
     considerations.push('Availability end time was not provided — expiry cannot be determined.')
   }
   if (hasAvailabilityUntil && remainingHours <= 0) {
+    const elapsedDesc = elapsedSinceExpiryHours > 0 ? ` (${formatDuration(elapsedSinceExpiryHours)} ago)` : ''
+    const windowStr = availabilityWindowHours > 0 ? `The original ${Math.round(availabilityWindowHours)}h availability window` : 'The stated availability window'
     considerations.push(
-      'The stated availability window has expired — coordinator must verify with the donor whether the food is still properly stored and eligible for collection.',
+      `${windowStr} has expired${elapsedDesc} — coordinator must verify with the donor whether the food is still properly stored and eligible for collection.`,
     )
   }
 
@@ -1003,6 +1026,7 @@ function buildReasoning(
   confidence: number,
   ageEval: AgeEvaluation,
   hasAvailabilityUntil: boolean,
+  elapsedSinceExpiryHours: number = 0,
 ): string {
   const qty = `${input.quantity} ${input.unit}`.trim()
   const servings = input.estimatedServings ? ` (approximately ${input.estimatedServings} servings)` : ''
@@ -1014,7 +1038,8 @@ function buildReasoning(
 
   let remainDesc: string
   if (isWindowElapsed) {
-    remainDesc = 'the stated availability window has expired'
+    const elapsedDesc = elapsedSinceExpiryHours > 0 ? ` (${formatDuration(elapsedSinceExpiryHours)} past deadline)` : ''
+    remainDesc = `the original availability window has expired${elapsedDesc}`
   } else if (remainingHours > 0) {
     remainDesc = `approximately ${Math.round(remainingHours)} hour${Math.round(remainingHours) !== 1 ? 's' : ''} remaining before the stated expiry`
   } else {
@@ -1079,6 +1104,11 @@ function buildDateErrorResult(
     storageRecommendation: profile.storageRecommendation,
     availabilityWindowHours: 0,
     availabilityStatus: 'Active',
+    availabilityWindowDisplay: '0h total — Active',
+    foodAgeHours: 0,
+    foodAgeAtAssessment: 'Unknown',
+    remainingAvailabilityHours: 0,
+    elapsedSinceExpiryHours: 0,
     safetyConsiderations: [
       'This analysis is advisory only and does not constitute a certified food-safety assessment.',
       `Date validation failed: ${reason}`,
@@ -1182,6 +1212,14 @@ export async function runAnalysis(
   const hasAvailabilityUntil = untilTime > 0
   const remainingHours = computeRemainingHoursFromTimes(untilTime, nowTime)
   const availabilityWindowHours = computeWindowHoursFromTimes(prepTime, untilTime)
+  const isExpired = hasAvailabilityUntil && nowTime >= untilTime
+  const availabilityStatus: 'Active' | 'Expired' = isExpired ? 'Expired' : 'Active'
+  const elapsedSinceExpiryHours = isExpired ? Math.max(0, (nowTime - untilTime) / (1000 * 60 * 60)) : 0
+  const remainingAvailabilityHours = isExpired ? 0 : remainingHours
+  const availabilityWindowDisplay = availabilityWindowHours > 0
+    ? `${Math.round(availabilityWindowHours)}h total — ${availabilityStatus}`
+    : `Unspecified — ${availabilityStatus}`
+  const foodAgeAtAssessment = formatDuration(foodAgeHours)
 
   // ── Storage condition check — secondary safety signal ────────────────────
   const storageEval = evaluateStorageCondition(category, input.storageCondition, foodAgeHours)
@@ -1233,6 +1271,8 @@ export async function runAnalysis(
     ageEval,
     hasAvailabilityUntil,
     foodAgeHours,
+    availabilityWindowHours,
+    elapsedSinceExpiryHours,
   )
   // Append storage mismatch note if present
   const safetyConsiderations = storageEval.storageNote !== null
@@ -1244,9 +1284,6 @@ export async function runAnalysis(
     input.quantity && input.unit
       ? `${input.quantity} ${input.unit}`
       : input.quantity || 'Quantity not specified'
-
-  const availabilityStatus: 'Active' | 'Expired' =
-    hasAvailabilityUntil && remainingHours <= 0 ? 'Expired' : 'Active'
 
   return {
     // Input echo
@@ -1261,6 +1298,8 @@ export async function runAnalysis(
       ageEval,
       hasAvailabilityUntil,
       input.storageCondition,
+      availabilityWindowHours,
+      elapsedSinceExpiryHours,
     ),
     storageRecommendation: deriveStorageRecommendation(
       category,
@@ -1270,6 +1309,11 @@ export async function runAnalysis(
     ),
     availabilityWindowHours: Math.round(availabilityWindowHours),
     availabilityStatus,
+    availabilityWindowDisplay,
+    foodAgeHours: parseFloat(foodAgeHours.toFixed(2)),
+    foodAgeAtAssessment,
+    remainingAvailabilityHours: parseFloat(remainingAvailabilityHours.toFixed(2)),
+    elapsedSinceExpiryHours: parseFloat(elapsedSinceExpiryHours.toFixed(2)),
 
     // Safety & suitability
     safetyConsiderations,
@@ -1289,6 +1333,8 @@ export async function runAnalysis(
       hasAvailabilityUntil,
       input.foodName,
       input.storageCondition,
+      availabilityWindowHours,
+      elapsedSinceExpiryHours,
     ),
     reasoning: buildReasoning(
       input,
@@ -1300,6 +1346,7 @@ export async function runAnalysis(
       confidence,
       ageEval,
       hasAvailabilityUntil,
+      elapsedSinceExpiryHours,
     ),
     relevantGuidance: baseGuidance,
 

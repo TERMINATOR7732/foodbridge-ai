@@ -247,13 +247,8 @@ export default function FoodAnalysisPage() {
                   <div className={`card card-sm ${styles.statCard}`}>
                     <div className={styles.statLabel}>Availability window</div>
                     <div className={styles.statValue}>
-                      {analysis.availabilityWindowHours}h
-                      {analysis.availabilityStatus === 'Expired' ||
-                      (analysis.estimatedShelfLife &&
-                        (analysis.estimatedShelfLife.toLowerCase().includes('expired') ||
-                          analysis.estimatedShelfLife.toLowerCase().includes('elapsed')))
-                        ? ' — Expired'
-                        : ''}
+                      {analysis.availabilityWindowDisplay ||
+                        `${analysis.availabilityWindowHours}h total — ${analysis.availabilityStatus === 'Expired' ? 'Expired' : 'Active'}`}
                     </div>
                   </div>
                 </div>
